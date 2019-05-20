@@ -31,6 +31,7 @@ uint32_t gm_ts_last = 0;
 struct sample_t gm_torque_driver;         // last few driver torques measured
 
 static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+  controls_allowed = 1;
   int bus_number = (to_push->RDTR >> 4) & 0xFF;
   uint32_t addr;
   if (to_push->RIR & 4) {
@@ -67,21 +68,21 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // on powertrain bus.
   // 384 = ASCMLKASteeringCmd
   // 715 = ASCMGasRegenCmd
-  if (bus_number == 0 && (addr == 384 || addr == 715)) {
-    gm_ascm_detected = 1;
-    controls_allowed = 0;
-  }
+  //if (bus_number == 0 && addr == 384) {
+  //  gm_ascm_detected = 1;
+  //  controls_allowed = 0;
+  //}
 
   // ACC steering wheel buttons
-  if (addr == 481) {
-    int buttons = (to_push->RDHR >> 12) & 0x7;
-    // res/set - enable, cancel button - disable
-    if (buttons == 2 || buttons == 3) {
-      controls_allowed = 1;
-    } else if (buttons == 6) {
-      controls_allowed = 0;
-    }
-  }
+  //if (addr == 481) {
+  //  int buttons = (to_push->RDHR >> 12) & 0x7;
+  //  // res/set - enable, cancel button - disable
+  //  if (buttons == 2 || buttons == 3) {
+  //    controls_allowed = 1;
+  //  } else if (buttons == 6) {
+  //    controls_allowed = 0;
+  //  }
+  //}
 
   // exit controls on rising edge of brake press or on brake press when
   // speed > 0
@@ -114,6 +115,7 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       controls_allowed = 0;
     }
   }
+  controls_allowed = 1;
 }
 
 // all commands: gas/regen, friction brake and steering
@@ -123,11 +125,11 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 //     block all commands that produce actuation
 
 static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
-
+  controls_allowed = 1;
   // There can be only one! (ASCM)
-  if (gm_ascm_detected) {
-    return 0;
-  }
+  //if (gm_ascm_detected) {
+  //  return 0;
+  //}
 
   // disallow actuator commands if gas or brake (with vehicle moving) are pressed
   // and the the latching controls_allowed flag is True
@@ -145,6 +147,9 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // BRAKE: safety check
   if (addr == 789) {
+    // disabled to test lateral only
+    return false;
+
     int rdlr = to_send->RDLR;
     int brake = ((rdlr & 0xF) << 8) + ((rdlr & 0xFF00) >> 8);
     brake = (0x1000 - brake) & 0xFFF;
@@ -209,6 +214,9 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
 
   // GAS/REGEN: safety check
   if (addr == 715) {
+    // disabled to test lateral only
+    return false;
+
     int rdlr = to_send->RDLR;
     int gas_regen = ((rdlr & 0x7F0000) >> 11) + ((rdlr & 0xF8000000) >> 27);
     int apply = rdlr & 1;
