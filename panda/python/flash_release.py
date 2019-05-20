@@ -91,5 +91,6 @@ def flash_release(path=None, st_serial=None):
   status("6. Success!")
   
 if __name__ == "__main__":
-  flash_release(*sys.argv[1:])
+  #flash_release(*sys.argv[1:])
+  print("hi")
 

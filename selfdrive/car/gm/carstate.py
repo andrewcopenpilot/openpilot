@@ -35,7 +35,7 @@ def get_powertrain_can_parser(CP, canbus):
     signals += [
       ("RegenPaddle", "EBCMRegenPaddle", 0),
     ]
-  if CP.carFingerprint in SUPERCRUISE_CARS:
+  if not CP.openpilotLongitudinalControl:
     signals += [
       ("ACCCmdActive", "ASCMActiveCruiseControlStatus", 0)
     ]
@@ -103,7 +103,7 @@ class CarState(object):
 
     # 0 - inactive, 1 - active, 2 - temporary limited, 3 - failed
     self.lkas_status = pt_cp.vl["PSCMStatus"]['LKATorqueDeliveredStatus']
-    self.steer_not_allowed = not is_eps_status_ok(self.lkas_status, self.car_fingerprint)
+    self.steer_not_allowed = not is_eps_status_ok(self.lkas_status, self.car_fingerprint, self.CP.openpilotLongitudinalControl)
 
     # 1 - open, 0 - closed
     self.door_all_closed = (pt_cp.vl["BCMDoorBeltStatus"]['FrontLeftDoor'] == 0 and
@@ -124,9 +124,9 @@ class CarState(object):
     self.left_blinker_on = pt_cp.vl["BCMTurnSignals"]['TurnSignals'] == 1
     self.right_blinker_on = pt_cp.vl["BCMTurnSignals"]['TurnSignals'] == 2
 
-    if self.car_fingerprint in SUPERCRUISE_CARS:
+    if not self.CP.openpilotLongitudinalControl:
       self.park_brake = False
-      self.main_on = False
+      self.main_on = True
       self.acc_active = pt_cp.vl["ASCMActiveCruiseControlStatus"]['ACCCmdActive']
       self.esp_disabled = False
       self.regen_pressed = False

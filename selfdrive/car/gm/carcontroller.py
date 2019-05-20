@@ -80,7 +80,7 @@ class CarController(object):
     self.packer_ch = CANPacker(DBC[car_fingerprint]['chassis'])
 
   def update(self, sendcan, enabled, CS, frame, actuators, \
-             hud_v_cruise, hud_show_lanes, hud_show_car, chime, chime_cnt):
+             hud_v_cruise, hud_show_lanes, hud_show_car, chime, chime_cnt, openpilotLongitudinalControl):
     """ Controls thread """
 
     # Sanity check.
@@ -115,7 +115,7 @@ class CarController(object):
 
     ### GAS/BRAKE ###
 
-    if self.car_fingerprint not in SUPERCRUISE_CARS:
+    if openpilotLongitudinalControl:
       # no output if not enabled, but keep sending keepalive messages
       # treat pedals as one
       final_pedal = actuators.gas - actuators.brake

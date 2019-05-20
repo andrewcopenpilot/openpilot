@@ -4,7 +4,7 @@ from common.realtime import sec_since_boot
 from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import create_event, EventTypes as ET
 from selfdrive.controls.lib.vehicle_model import VehicleModel
-from selfdrive.car.gm.values import DBC, CAR, STOCK_CONTROL_MSGS, AUDIO_HUD, SUPERCRUISE_CARS
+from selfdrive.car.gm.values import DBC, CAR, STOCK_LATERAL_CONTROL_MSGS, STOCK_LONG_CONTROL_MSGS, AUDIO_HUD, SUPERCRUISE_CARS
 from selfdrive.car.gm.carstate import CarState, CruiseButtons, get_powertrain_can_parser
 
 try:
@@ -28,6 +28,7 @@ class CarInterface(object):
     self.brake_pressed_prev = False
     self.can_invalid_count = 0
     self.acc_active_prev = 0
+    self.openpilotLongitudinalControl = False
 
     # *** init the major players ***
     canbus = CanBus()
@@ -61,8 +62,8 @@ class CarInterface(object):
     # Presence of a camera on the object bus is ok.
     # Have to go passive if ASCM is online (ACC-enabled cars),
     # or camera is on powertrain bus (LKA cars without ACC).
-    ret.enableCamera = not any(x for x in STOCK_CONTROL_MSGS[candidate] if x in fingerprint)
-    ret.openpilotLongitudinalControl = ret.enableCamera
+    ret.enableCamera = not any(x for x in STOCK_LATERAL_CONTROL_MSGS[candidate] if x in fingerprint)
+    ret.openpilotLongitudinalControl = not any(x for x in STOCK_LONG_CONTROL_MSGS[candidate] if x in fingerprint)
 
     std_cargo = 136
 
@@ -190,6 +191,9 @@ class CarInterface(object):
     ret.steerActuatorDelay = 0.1  # Default delay, not measured yet
     ret.steerRateCost = 1.0
     ret.steerControlType = car.CarParams.SteerControlType.torque
+
+    if not ret.openpilotLongitudinalControl:
+      ret.minEnableSpeed = -1 # Lateral control only. PCM decides
 
     return ret
 
@@ -360,6 +364,7 @@ class CarInterface(object):
       c.actuators,
       hud_v_cruise, c.hudControl.lanesVisible, \
       c.hudControl.leadVisible, \
-      chime, chime_count)
+      chime, chime_count,
+      self.openpilotLongitudinalControl)
 
     self.frame += 1
