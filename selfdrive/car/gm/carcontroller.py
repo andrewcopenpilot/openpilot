@@ -113,6 +113,11 @@ class CarController(object):
         can_sends.append(gmcan.create_steering_control(self.packer_pt,
           canbus.powertrain, apply_steer, idx, lkas_enabled))
 
+    ### Resume ####
+
+    if enabled and CS.standstill:
+      can_sends += gmcan.create_resume_press(canbus.powertrain)
+
     ### GAS/BRAKE ###
 
     if openpilotLongitudinalControl:

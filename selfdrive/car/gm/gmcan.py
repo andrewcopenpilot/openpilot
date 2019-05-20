@@ -39,6 +39,10 @@ def create_adas_keepalive(bus):
   dat = "\x00\x00\x00\x00\x00\x00\x00"
   return [[0x409, 0, dat, bus], [0x40a, 0, dat, bus]]
 
+def create_resume_press(bus):
+  dat = "\x00\x00\x00\x01\x02\x26\xdd"
+  return [0x1e1, 0, dat, bus]
+
 def create_gas_regen_command(packer, bus, throttle, idx, acc_engaged, at_full_stop):
   values = {
     "GasRegenCmdActive": acc_engaged,
