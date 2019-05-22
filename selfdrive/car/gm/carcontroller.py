@@ -116,7 +116,9 @@ class CarController(object):
     ### Resume ####
 
     if enabled and CS.standstill and (frame % 50) == 0:
-      can_sends += gmcan.create_resume_press(canbus.powertrain)
+      can_sends += gmcan.create_resume_press_1(canbus.powertrain)
+    if enabled and CS.standstill and (frame % 51) == 0:
+      can_sends += gmcan.create_resume_press_2(canbus.powertrain)
 
     ### GAS/BRAKE ###
 
