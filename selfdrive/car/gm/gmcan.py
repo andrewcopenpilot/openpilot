@@ -55,6 +55,22 @@ def create_resume_press_4(bus):
   dat = "\x00\x00\x00\x01\x03\x2b\xcc"
   return [[0x1e1, 0, dat, bus]]
 
+def create_resume_unpress_1(bus):
+  dat = "\x00\x00\x00\x01\x00\x1c\xcf"
+  return [[0x1e1, 0, dat, bus]]
+
+def create_resume_unpress_2(bus):
+  dat = "\x00\x00\x00\x01\x01\x11\xfe"
+  return [[0x1e1, 0, dat, bus]]
+
+def create_resume_unpress_3(bus):
+  dat = "\x00\x00\x00\x01\x02\x16\xed"
+  return [[0x1e1, 0, dat, bus]]
+
+def create_resume_unpress_4(bus):
+  dat = "\x00\x00\x00\x01\x03\x1b\xdc"
+  return [[0x1e1, 0, dat, bus]]
+
 def create_gas_regen_command(packer, bus, throttle, idx, acc_engaged, at_full_stop):
   values = {
     "GasRegenCmdActive": acc_engaged,
