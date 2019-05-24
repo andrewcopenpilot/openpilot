@@ -34,10 +34,17 @@ def create_steering_control_ct6(packer, canbus, apply_steer, v_ego, idx, enabled
          [0x151, 0, dat, canbus.chassis], \
          [0x153, 0, dat, canbus.chassis]
 
-
 def create_adas_keepalive(bus):
   dat = "\x00\x00\x00\x00\x00\x00\x00"
   return [[0x409, 0, dat, bus], [0x40a, 0, dat, bus]]
+
+def create_sw_resume_press(bus):
+  dat = "\x04\x00\x00"
+  return [0x10758040, 0, dat, bus]
+
+def create_sw_resume_unpress(bus):
+  dat = "\x02\x00\x00"
+  return [0x10758040, 0, dat, bus]
 
 def create_resume_press_1(bus):
   dat = "\x00\x00\x00\x01\x00\x2c\xbf"
