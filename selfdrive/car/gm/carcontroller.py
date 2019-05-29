@@ -79,6 +79,8 @@ class CarController(object):
     self.packer_pt = CANPacker(DBC[car_fingerprint]['pt'])
     self.packer_ch = CANPacker(DBC[car_fingerprint]['chassis'])
 
+    self.resume_msg_wait = True
+
   def update(self, sendcan, enabled, CS, frame, actuators, \
              hud_v_cruise, hud_show_lanes, hud_show_car, chime, chime_cnt, openpilotLongitudinalControl):
     """ Controls thread """
@@ -113,28 +115,36 @@ class CarController(object):
         can_sends.append(gmcan.create_steering_control(self.packer_pt,
           canbus.powertrain, apply_steer, idx, lkas_enabled))
 
-    ### Resume ####
+    ### Resume ###
+    #if enabled and CS.standstill:
+    if self.resume_msg_wait:
+      if (frame % 100) == 0:
+        self.resume_msg_wait = False
+    else:
+      if CS.cruise_buttons_counter == 3 and CS.prev_cruise_buttons_counter == 2:
+        can_sends += gmcan.create_resume_press_1(canbus.powertrain)
+        self.resume_msg_wait = True
 
-    if enabled and CS.standstill and (frame % 50) == 0:
-      can_sends.append(gmcan.create_sw_resume_press(canbus.sw_gmlan))
-      can_sends += gmcan.create_resume_press_1(canbus.powertrain)
-    if enabled and CS.standstill and (frame % 50) == 1:
-      can_sends += gmcan.create_resume_press_2(canbus.powertrain)
-    if enabled and CS.standstill and (frame % 50) == 2:
-      can_sends += gmcan.create_resume_press_3(canbus.powertrain)
-    if enabled and CS.standstill and (frame % 50) == 3:
-      can_sends += gmcan.create_resume_press_4(canbus.powertrain)
-    if enabled and CS.standstill and (frame % 50) == 4:
-      can_sends += gmcan.create_resume_press_1(canbus.powertrain)
-    if enabled and CS.standstill and (frame % 50) == 5:
-      can_sends += gmcan.create_resume_press_2(canbus.powertrain)
-    if enabled and CS.standstill and (frame % 50) == 6:
-      can_sends += gmcan.create_resume_press_3(canbus.powertrain)
-    if enabled and CS.standstill and (frame % 50) == 7:
-      can_sends += gmcan.create_resume_press_4(canbus.powertrain)
+    #if enabled and CS.standstill and (frame % 50) == 0:
+    #  can_sends.append(gmcan.create_sw_resume_press(canbus.sw_gmlan))
+    #  can_sends += gmcan.create_resume_press_1(canbus.powertrain)
+    #if enabled and CS.standstill and (frame % 50) == 1:
+    #  can_sends += gmcan.create_resume_press_2(canbus.powertrain)
+    #if enabled and CS.standstill and (frame % 50) == 2:
+    #  can_sends += gmcan.create_resume_press_3(canbus.powertrain)
+    #if enabled and CS.standstill and (frame % 50) == 3:
+    #  can_sends += gmcan.create_resume_press_4(canbus.powertrain)
+    #if enabled and CS.standstill and (frame % 50) == 4:
+    #  can_sends += gmcan.create_resume_press_1(canbus.powertrain)
+    #if enabled and CS.standstill and (frame % 50) == 5:
+    #  can_sends += gmcan.create_resume_press_2(canbus.powertrain)
+    #if enabled and CS.standstill and (frame % 50) == 6:
+    #  can_sends += gmcan.create_resume_press_3(canbus.powertrain)
+    #if enabled and CS.standstill and (frame % 50) == 7:
+    #  can_sends += gmcan.create_resume_press_4(canbus.powertrain)
 
-    if enabled and CS.standstill and (frame % 50) == 25:
-      can_sends.append(gmcan.create_sw_resume_unpress(canbus.sw_gmlan))
+    #if enabled and CS.standstill and (frame % 50) == 25:
+    #  can_sends.append(gmcan.create_sw_resume_unpress(canbus.sw_gmlan))
 
 
     ### GAS/BRAKE ###

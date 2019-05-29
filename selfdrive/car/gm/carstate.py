@@ -56,10 +56,12 @@ class CarState(object):
 
     self.car_fingerprint = CP.carFingerprint
     self.cruise_buttons = CruiseButtons.UNPRESS
+    self.cruise_buttons_counter = 0
     self.left_blinker_on = False
     self.prev_left_blinker_on = False
     self.right_blinker_on = False
     self.prev_right_blinker_on = False
+
 
     # vEgo kalman filter
     dt = 0.01
@@ -74,6 +76,8 @@ class CarState(object):
     self.can_valid = pt_cp.can_valid
     self.prev_cruise_buttons = self.cruise_buttons
     self.cruise_buttons = pt_cp.vl["ASCMSteeringButton"]['ACCButtons']
+    self.prev_cruise_buttons_counter = self.cruise_buttons_counter
+    self.cruise_buttons_counter = pt_cp.vl["ASCMSteeringButton"]['RollingCounter']
 
     self.v_wheel_fl = pt_cp.vl["EBCMWheelSpdFront"]['FLWheelSpd'] * CV.KPH_TO_MS
     self.v_wheel_fr = pt_cp.vl["EBCMWheelSpdFront"]['FRWheelSpd'] * CV.KPH_TO_MS
