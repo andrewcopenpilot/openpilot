@@ -6,6 +6,7 @@ from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.gm import gmcan
 from selfdrive.car.gm.values import DBC, SUPERCRUISE_CARS
 from selfdrive.can.packer import CANPacker
+import logging
 
 
 class CarControllerParams():
@@ -62,6 +63,8 @@ def actuator_hystereses(final_pedal, pedal_steady):
 
 class CarController(object):
   def __init__(self, canbus, car_fingerprint, allow_controls):
+    logging.basicConfig(level=logging.DEBUG, filename="/tmp/chrylog", filemode="a+", format="%(asctime)-15s %(levelname)-8s %(message)s")
+    logging.info("CarController __init__")
     self.pedal_steady = 0.
     self.start_time = sec_since_boot()
     self.chime = 0
@@ -83,6 +86,8 @@ class CarController(object):
              hud_show_lanes, hud_show_car, chime, chime_cnt, ascmRemoved,
              openpilotLongitudinalControl):
     """ Controls thread """
+    logging.info('openpilotLongitudinalControl: %s', openpilotLongitudinalControl)
+    logging.info('ascmRemoved: %s', )
 
     # Sanity check.
     if not self.allow_controls:
