@@ -101,24 +101,37 @@ FINGERPRINTS = {
 
 STEER_THRESHOLD = 1.0
 
-STOCK_LATERAL_CONTROL_MSGS = {
-  CAR.HOLDEN_ASTRA: [384],
-  CAR.VOLT: [384], # 384 = "ASCMLKASteeringCmd", 715 = "ASCMGasRegenCmd"
-  CAR.MALIBU: [384], # 384 = "ASCMLKASteeringCmd", 715 = "ASCMGasRegenCmd"
-  CAR.ACADIA: [384], # 384 = "ASCMLKASteeringCmd", 715 = "ASCMGasRegenCmd"
-  CAR.CADILLAC_ATS: [384], # 384 = "ASCMLKASteeringCmd", 715 = "ASCMGasRegenCmd"
-  CAR.BUICK_REGAL: [384], # 384 = "ASCMLKASteeringCmd", 715 = "ASCMGasRegenCmd"
-  CAR.CADILLAC_CT6: [], # CT6 does not require ASCMs to be disconnected
+# 384 = "ASCMLKASteeringCmd"
+STOCK_LATERAL_CONTROL_MSG = {
+  CAR.HOLDEN_ASTRA: 384,
+  CAR.VOLT: 384,
+  CAR.MALIBU: 384,
+  CAR.ACADIA: 384,
+  CAR.CADILLAC_ATS: 384,
+  CAR.BUICK_REGAL: 384,
+  # NO OP FOR SUPERCRUISE CARS
 }
 
-STOCK_LONG_CONTROL_MSGS = {
-  CAR.HOLDEN_ASTRA: [715],
-  CAR.VOLT: [715], # 384 = "ASCMLKASteeringCmd", 715 = "ASCMGasRegenCmd"
-  CAR.MALIBU: [715], # 384 = "ASCMLKASteeringCmd", 715 = "ASCMGasRegenCmd"
-  CAR.ACADIA: [715], # 384 = "ASCMLKASteeringCmd", 715 = "ASCMGasRegenCmd"
-  CAR.CADILLAC_ATS: [715], # 384 = "ASCMLKASteeringCmd", 715 = "ASCMGasRegenCmd"
-  CAR.BUICK_REGAL: [715], # 384 = "ASCMLKASteeringCmd", 715 = "ASCMGasRegenCmd"
-  CAR.CADILLAC_CT6: [], # CT6 does not require ASCMs to be disconnected
+# 715 = "ASCMGasRegenCmd"
+STOCK_LONG_CONTROL_MSG = {
+  CAR.HOLDEN_ASTRA: 715,
+  CAR.VOLT: 715,
+  CAR.MALIBU: 715,
+  CAR.ACADIA: 715,
+  CAR.CADILLAC_ATS: 715,
+  CAR.BUICK_REGAL: 715,
+  # NO OP FOR SUPERCRUISE CARS
+}
+
+# 1930 = "ASCM_78A - Use to detect if ASCM is present even if other messages are being filtered"
+ASCM_PRESENT_MSG = {
+  CAR.HOLDEN_ASTRA: 1930,
+  CAR.VOLT: 1930,
+  CAR.MALIBU: 1930,
+  CAR.ACADIA: 1930,
+  CAR.CADILLAC_ATS: 1930,
+  CAR.BUICK_REGAL: 1930,
+  # NO OP FOR SUPERCRUISE CARS
 }
 
 DBC = {

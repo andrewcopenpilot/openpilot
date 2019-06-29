@@ -4,7 +4,7 @@ from common.realtime import sec_since_boot
 from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import create_event, EventTypes as ET
 from selfdrive.controls.lib.vehicle_model import VehicleModel
-from selfdrive.car.gm.values import DBC, CAR, STOCK_LATERAL_CONTROL_MSGS, STOCK_LONG_CONTROL_MSGS, AUDIO_HUD, SUPERCRUISE_CARS
+from selfdrive.car.gm.values import DBC, CAR, STOCK_LATERAL_CONTROL_MSG, STOCK_LONG_CONTROL_MSG, ASCM_PRESENT_MSG, AUDIO_HUD, SUPERCRUISE_CARS
 from selfdrive.car.gm.carstate import CarState, CruiseButtons, get_powertrain_can_parser
 
 try:
@@ -29,6 +29,7 @@ class CarInterface(object):
     self.can_invalid_count = 0
     self.acc_active_prev = 0
     self.openpilotLongitudinalControl = False
+    self.ascmRemoved = False
 
     # *** init the major players ***
     canbus = CanBus()
@@ -59,11 +60,9 @@ class CarInterface(object):
 
     ret.enableCruise = False
 
-    # Presence of a camera on the object bus is ok.
-    # Have to go passive if ASCM is online (ACC-enabled cars),
-    # or camera is on powertrain bus (LKA cars without ACC).
-    ret.enableCamera = not any(x for x in STOCK_LATERAL_CONTROL_MSGS[candidate] if x in fingerprint)
-    ret.openpilotLongitudinalControl = not any(x for x in STOCK_LONG_CONTROL_MSGS[candidate] if x in fingerprint)
+    ret.enableCamera = STOCK_LATERAL_CONTROL_MSG.get(candidate) not in fingerprint
+    ret.openpilotLongitudinalControl = STOCK_LONG_CONTROL_MSG.get(candidate) not in fingerprint
+    ret.ascmRemoved = ASCM_PRESENT_MSG.get(candidate) not in fingerprint
 
     std_cargo = 136
 
@@ -360,11 +359,9 @@ class CarInterface(object):
     # In GM, PCM faults out if ACC command overlaps user gas.
     enabled = c.enabled and not self.CS.user_gas_pressed
 
-    self.CC.update(self.sendcan, enabled, self.CS, self.frame, \
-      c.actuators,
-      hud_v_cruise, c.hudControl.lanesVisible, \
-      c.hudControl.leadVisible, \
-      chime, chime_count,
-      self.openpilotLongitudinalControl)
+    self.CC.update(self.sendcan, enabled, self.CS, self.frame, c.actuators,
+                   hud_v_cruise, c.hudControl.lanesVisible,
+                   c.hudControl.leadVisible, chime, chime_count,
+                   self.ascmRemoved, self.openpilotLongitudinalControl)
 
     self.frame += 1
