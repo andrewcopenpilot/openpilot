@@ -157,11 +157,11 @@ class CarController(object):
         at_full_stop = enabled and CS.standstill
         can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, canbus.powertrain, apply_gas, idx, enabled, at_full_stop))
 
-      if ASCMRemoved:
         # Send dashboard UI commands (ACC status), 25hz
         if (frame % 4) == 0:
           can_sends.append(gmcan.create_acc_dashboard_command(self.packer_pt, canbus.powertrain, enabled, hud_v_cruise * CV.MS_TO_KPH, hud_show_car))
 
+      if ASCMRemoved:
         # Radar needs to know current speed and yaw rate (50hz),
         # and that ADAS is alive (10hz)
         time_and_headlights_step = 10
