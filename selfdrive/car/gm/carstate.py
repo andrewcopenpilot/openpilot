@@ -29,6 +29,9 @@ def get_powertrain_can_parser(CP, canbus):
     ("PRNDL", "ECMPRDNL", 0),
     ("LKADriverAppldTrq", "PSCMStatus", 0),
     ("LKATorqueDeliveredStatus", "PSCMStatus", 0),
+    ("RollingCounter", "ASCMLKASteeringCmd", -1),
+    ("RollingCounter", "ASCMGasRegenCmd", -1),
+    ("ASCMKeepAliveAllZero", "ASCMKeepAlive", -1),
   ]
 
   if CP.carFingerprint == CAR.VOLT:
@@ -61,6 +64,12 @@ class CarState(object):
     self.right_blinker_on = False
     self.prev_right_blinker_on = False
 
+    self.LKASteerCmdsFiltered = False
+    self.ASCMGasRegenCmdFiltered = False
+    self.ASCMRemoved = False
+    self.LKASteeringCounter = 99
+    self.ASCMGasRegenCmdCounter = 99
+
     # vEgo kalman filter
     dt = 0.01
     self.v_ego_kf = KF1D(x0=np.matrix([[0.], [0.]]),
@@ -70,6 +79,21 @@ class CarState(object):
     self.v_ego = 0.
 
   def update(self, pt_cp):
+    if pt_cp.vl["ASCMLKASteeringCmd"]['RollingCounter'] == -1:
+      self.LKASteerCmdsFiltered = True
+    else:
+      self.LKASteerCmdsFiltered = False
+
+    self.ASCMGasRegenCmdCounter = pt_cp.vl["ASCMGasRegenCmd"]['RollingCounter']
+    if pt_cp.vl["ASCMGasRegenCmd"]['RollingCounter'] == -1:
+      self.ASCMGasRegenCmdFiltered = True
+    else:
+      self.ASCMGasRegenCmdFiltered = False
+
+    if pt_cp.vl["ASCMKeepAlive"]['ASCMKeepAliveAllZero'] == -1:
+      self.ASCMRemoved = True
+    else:
+      self.ASCMRemoved = False
 
     self.can_valid = pt_cp.can_valid
     self.prev_cruise_buttons = self.cruise_buttons

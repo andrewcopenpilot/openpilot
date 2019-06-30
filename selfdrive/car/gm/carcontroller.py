@@ -6,7 +6,7 @@ from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.gm import gmcan
 from selfdrive.car.gm.values import DBC, SUPERCRUISE_CARS
 from selfdrive.can.packer import CANPacker
-import logging
+#import logging
 
 
 class CarControllerParams():
@@ -63,8 +63,8 @@ def actuator_hystereses(final_pedal, pedal_steady):
 
 class CarController(object):
   def __init__(self, canbus, car_fingerprint, allow_controls):
-    logging.basicConfig(level=logging.DEBUG, filename="/tmp/chrylog", filemode="a+", format="%(asctime)-15s %(levelname)-8s %(message)s")
-    logging.info("CarController __init__")
+    #logging.basicConfig(level=logging.DEBUG, filename="/tmp/gmcontrolerlog", filemode="a+", format="%(asctime)-15s %(levelname)-8s %(message)s")
+    #logging.info("CarController __init__")
     self.pedal_steady = 0.
     self.start_time = sec_since_boot()
     self.chime = 0
@@ -82,12 +82,20 @@ class CarController(object):
     self.packer_pt = CANPacker(DBC[car_fingerprint]['pt'])
     self.packer_ch = CANPacker(DBC[car_fingerprint]['chassis'])
 
+    #logging.info("car_fingerprint: %s", car_fingerprint)
+
   def update(self, sendcan, enabled, CS, frame, actuators, hud_v_cruise,
-             hud_show_lanes, hud_show_car, chime, chime_cnt, ascmRemoved,
+             hud_show_lanes, hud_show_car, chime, chime_cnt,
              openpilotLongitudinalControl):
     """ Controls thread """
-    logging.info('openpilotLongitudinalControl: %s', openpilotLongitudinalControl)
-    logging.info('ascmRemoved: %s', )
+    openpilotLongitudinalControl = CS.ASCMGasRegenCmdFiltered
+    ASCMRemoved = CS.ASCMRemoved
+
+    #logging.info('ASCMLKASteerCmdsFiltered: %s ', CS.LKASteerCmdsFiltered)
+    #logging.info('ASCMGasRegenCmdFiltered: %s', CS.ASCMGasRegenCmdFiltered)
+    #logging.info('ASCMRemoved: %s ', CS.ASCMRemoved)
+    #logging.info('openpilotLongitudinalControl: %s', openpilotLongitudinalControl)
+    #logging.info('ascmRemoved: %s', ascmRemoved)
 
     # Sanity check.
     if not self.allow_controls:
@@ -149,7 +157,7 @@ class CarController(object):
         at_full_stop = enabled and CS.standstill
         can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, canbus.powertrain, apply_gas, idx, enabled, at_full_stop))
 
-      if ascmRemoved:
+      if ASCMRemoved:
         # Send dashboard UI commands (ACC status), 25hz
         if (frame % 4) == 0:
           can_sends.append(gmcan.create_acc_dashboard_command(self.packer_pt, canbus.powertrain, enabled, hud_v_cruise * CV.MS_TO_KPH, hud_show_car))
