@@ -5,7 +5,7 @@ from selfdrive.config import Conversions as CV
 from selfdrive.can.parser import CANParser
 from selfdrive.car.gm.values import DBC, CAR, parse_gear_shifter, \
                                     CruiseButtons, is_eps_status_ok, \
-                                    STEER_THRESHOLD, SUPERCRUISE_CARS
+                                    STEER_THRESHOLD
 
 def get_powertrain_can_parser(CP, canbus):
   # this function generates lists for signal, messages and initial values
@@ -50,7 +50,8 @@ def get_powertrain_can_parser(CP, canbus):
       ("CruiseState", "AcceleratorPedal2", 0),
     ]
 
-  return CANParser(DBC[CP.carFingerprint]['pt'], signals, [], canbus.powertrain)
+  return CANParser(DBC[CP.carFingerprint]['pt'], signals, [], canbus.powertrain, timeout=100)
+
 
 class CarState(object):
   def __init__(self, CP, canbus):
@@ -72,28 +73,16 @@ class CarState(object):
 
     # vEgo kalman filter
     dt = 0.01
-    self.v_ego_kf = KF1D(x0=np.matrix([[0.], [0.]]),
-                         A=np.matrix([[1., dt], [0., 1.]]),
-                         C=np.matrix([1., 0.]),
-                         K=np.matrix([[0.12287673], [0.29666309]]))
+    self.v_ego_kf = KF1D(x0=[[0.], [0.]],
+                         A=[[1., dt], [0., 1.]],
+                         C=[1., 0.],
+                         K=[[0.12287673], [0.29666309]])
     self.v_ego = 0.
 
   def update(self, pt_cp):
-    if pt_cp.vl["ASCMLKASteeringCmd"]['RollingCounter'] == -1:
-      self.LKASteerCmdsFiltered = True
-    else:
-      self.LKASteerCmdsFiltered = False
-
-    self.ASCMGasRegenCmdCounter = pt_cp.vl["ASCMGasRegenCmd"]['RollingCounter']
-    if pt_cp.vl["ASCMGasRegenCmd"]['RollingCounter'] == -1:
-      self.ASCMGasRegenCmdFiltered = True
-    else:
-      self.ASCMGasRegenCmdFiltered = False
-
-    if pt_cp.vl["ASCMKeepAlive"]['ASCMKeepAliveAllZero'] == -1:
-      self.ASCMRemoved = True
-    else:
-      self.ASCMRemoved = False
+    self.LKASteerCmdsFiltered = pt_cp.vl["ASCMLKASteeringCmd"]['RollingCounter'] == -1
+    self.ASCMGasRegenCmdFiltered = pt_cp.vl["ASCMGasRegenCmd"]['RollingCounter'] == -1
+    self.ASCMRemoved = pt_cp.vl["ASCMKeepAlive"]['ASCMKeepAliveAllZero'] == -1
 
     self.can_valid = pt_cp.can_valid
     self.prev_cruise_buttons = self.cruise_buttons
@@ -141,7 +130,6 @@ class CarState(object):
     self.steer_error = False
 
     self.brake_error = False
-    self.can_valid = True
 
     self.prev_left_blinker_on = self.left_blinker_on
     self.prev_right_blinker_on = self.right_blinker_on
