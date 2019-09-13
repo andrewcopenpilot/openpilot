@@ -25,9 +25,9 @@ class AccState:
   FAULTED    = 3
   STANDSTILL = 4
 
-def is_eps_status_ok(eps_status, car_fingerprint):
+def is_eps_status_ok(eps_status, car_fingerprint, openpilotLongitudinalControl):
   valid_eps_status = []
-  if car_fingerprint in SUPERCRUISE_CARS:
+  if openpilotLongitudinalControl:
     valid_eps_status += [0, 1, 4, 5, 6]
   else:
     valid_eps_status += [0, 1]
@@ -67,6 +67,12 @@ FINGERPRINTS = {
   CAR.CADILLAC_ATS: [
   # Cadillac ATS Coupe Premium Performance 3.6L RWD w/ ACC 2018
   {
+    647: 6, 393: 7, 398: 8, 528: 5, 401: 8, 707: 8, 532: 6, 407: 7, 413: 8, 197: 8, 417: 7, 977: 8, 419: 1, 422: 4, 426: 7, 455: 7, 431: 8, 1328: 4, 456: 8, 562: 8, 442: 8, 190: 6, 1001: 8, 193: 8, 322: 7, 451: 8, 452: 8, 453: 6, 211: 2, 199: 4, 840: 5, 201: 8, 842: 5, 961: 8, 844: 8, 610: 6, 462: 4, 209: 7, 723: 2, 761: 7, 985: 5, 979: 8, 479: 3, 608: 8, 481: 7, 866: 4, 611: 6, 612: 8, 485: 8, 487: 8, 489: 8, 491: 2, 493: 8, 613: 8, 368: 3, 241: 6, 499: 3, 500: 6, 501: 8, 967: 4, 609: 6, 249: 8, 1355: 8, 508: 8, 801: 8, 510: 8
+  },
+  {
+    1033: 7, 1034: 7, 528: 5, 532: 6, 534: 2, 554: 3, 560: 8, 562: 8, 564: 5, 1105: 6, 1618: 8, 608: 8, 609: 6, 610: 6, 611: 6, 612: 8, 613: 8, 647: 6, 880: 6, 967: 4, 190: 6, 193: 8, 707: 8, 197: 8, 199: 4, 201: 8, 715: 8, 717: 5, 719: 5, 209: 7, 211: 2, 893: 2, 753: 5, 723: 2, 761: 7, 298: 8, 1296: 4, 801: 8, 810: 8, 309: 8, 311: 8, 313: 8, 322: 7, 840: 5, 842: 5, 844: 8, 352: 5, 866: 4, 869: 4, 368: 3, 882: 8, 489: 8, 1912: 7, 890: 1, 892: 2, 381: 6, 386: 8, 388: 8, 393: 7, 398: 8, 1005: 6, 401: 8, 407: 7, 413: 8, 417: 7, 419: 1, 422: 4, 241: 6, 426: 7, 431: 8, 328: 1, 1011: 6, 442: 8, 961: 8, 451: 8, 452: 8, 453: 6, 455: 7, 456: 8, 969: 8, 462: 4, 977: 8, 979: 8, 249: 8, 985: 5, 479: 3, 481: 7, 485: 8, 487: 8, 1001: 8, 491: 2, 493: 8, 1009: 8, 497: 8, 499: 3, 500: 6, 501: 8, 508: 8, 510: 8
+  },
+  {
     190: 6, 193: 8, 197: 8, 199: 4, 201: 8, 209: 7, 211: 2, 241: 6, 249: 8, 288: 5, 298: 8, 304: 1, 309: 8, 311: 8, 313: 8, 320: 3, 322: 7, 328: 1, 352: 5, 368: 3, 381: 6, 384: 4, 386: 8, 388: 8, 393: 7, 398: 8, 401: 8, 407: 7, 413: 8, 417: 7, 419: 1, 422: 4, 426: 7, 431: 8, 442: 8, 451: 8, 452: 8, 453: 6, 455: 7, 456: 8, 462: 4, 479: 3, 481: 7, 485: 8, 487: 8, 489: 8, 491: 2, 493: 8, 497: 8, 499: 3, 500: 6, 501: 8, 508: 8, 510: 8, 528: 5, 532: 6, 534: 2, 554: 3, 560: 8, 562: 8, 563: 5, 564: 5, 565: 5, 567: 5, 573: 1, 577: 8, 608: 8, 609: 6, 610: 6, 611: 6, 612: 8, 613: 8, 647: 6, 707: 8, 715: 8, 717: 5, 719: 5, 723: 2, 753: 5, 761: 7, 801: 8, 804: 3, 810: 8, 840: 5, 842: 5, 844: 8, 866: 4, 869: 4, 880: 6, 882: 8, 890: 1, 892: 2, 893: 2, 894: 1, 961: 8, 967: 4, 969: 8, 977: 8, 979: 8, 985: 5, 1001: 8, 1005: 6, 1009: 8, 1011: 6, 1013: 3, 1017: 8, 1019: 2, 1020: 8, 1033: 7, 1034: 7, 1105: 6, 1217: 8, 1221: 5, 1223: 3, 1225: 7, 1233: 8, 1241: 3, 1249: 8, 1257: 6, 1259: 8, 1261: 7, 1263: 4, 1265: 8, 1267: 1, 1271: 8, 1280: 4, 1296: 4, 1300: 8, 1322: 6, 1323: 4, 1328: 4, 1417: 8, 1601: 8, 1904: 7, 1906: 7, 1907: 7, 1912: 7, 1916: 7, 1917: 7, 1918: 7, 1919: 7, 1920: 7, 1930: 7, 2016: 8, 2024: 8
   }],
   CAR.CADILLAC_CT6: [{
@@ -86,14 +92,37 @@ FINGERPRINTS = {
 
 STEER_THRESHOLD = 1.0
 
-STOCK_CONTROL_MSGS = {
-  CAR.HOLDEN_ASTRA: [384, 715],
-  CAR.VOLT: [384, 715], # 384 = "ASCMLKASteeringCmd", 715 = "ASCMGasRegenCmd"
-  CAR.MALIBU: [384, 715], # 384 = "ASCMLKASteeringCmd", 715 = "ASCMGasRegenCmd"
-  CAR.ACADIA: [384, 715], # 384 = "ASCMLKASteeringCmd", 715 = "ASCMGasRegenCmd"
-  CAR.CADILLAC_ATS: [384, 715], # 384 = "ASCMLKASteeringCmd", 715 = "ASCMGasRegenCmd"
-  CAR.BUICK_REGAL: [384, 715], # 384 = "ASCMLKASteeringCmd", 715 = "ASCMGasRegenCmd"
-  CAR.CADILLAC_CT6: [], # CT6 does not require ASCMs to be disconnected
+# 384 = "ASCMLKASteeringCmd"
+STOCK_LATERAL_CONTROL_MSG = {
+  CAR.HOLDEN_ASTRA: 384,
+  CAR.VOLT: 384,
+  CAR.MALIBU: 384,
+  CAR.ACADIA: 384,
+  CAR.CADILLAC_ATS: 384,
+  CAR.BUICK_REGAL: 384,
+  # NO OP FOR SUPERCRUISE CARS
+}
+
+# 715 = "ASCMGasRegenCmd"
+STOCK_LONG_CONTROL_MSG = {
+  CAR.HOLDEN_ASTRA: 715,
+  CAR.VOLT: 715,
+  CAR.MALIBU: 715,
+  CAR.ACADIA: 715,
+  CAR.CADILLAC_ATS: 715,
+  CAR.BUICK_REGAL: 715,
+  # NO OP FOR SUPERCRUISE CARS
+}
+
+# 1930 = "ASCM_78A - Use to detect if ASCM is present even if other messages are being filtered"
+ASCM_PRESENT_MSG = {
+  CAR.HOLDEN_ASTRA: 1930,
+  CAR.VOLT: 1930,
+  CAR.MALIBU: 1930,
+  CAR.ACADIA: 1930,
+  CAR.CADILLAC_ATS: 1930,
+  CAR.BUICK_REGAL: 1930,
+  # NO OP FOR SUPERCRUISE CARS
 }
 
 DBC = {
