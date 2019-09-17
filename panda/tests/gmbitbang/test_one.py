@@ -5,7 +5,7 @@ from panda import Panda
 p = Panda()
 p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
 
-# hack anything on bus
+# ack any crap on bus
 p.set_gmlan(bus=2)
 time.sleep(0.1)
 while len(p.can_recv()) > 0:

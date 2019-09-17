@@ -6,62 +6,56 @@ void delay(int a) {
 }
 
 void *memset(void *str, int c, unsigned int n) {
-  uint8_t *s = str;
-  for (unsigned int i = 0; i < n; i++) {
-    *s = c;
-    s++;
+  unsigned int i;
+  for (i = 0; i < n; i++) {
+    *((uint8_t*)str) = c;
+    ++str;
   }
   return str;
 }
 
 void *memcpy(void *dest, const void *src, unsigned int n) {
-  uint8_t *d = dest;
-  const uint8_t *s = src;
-  for (unsigned int i = 0; i < n; i++) {
-    *d = *s;
-    d++;
-    s++;
+  unsigned int i;
+  // TODO: make not slow
+  for (i = 0; i < n; i++) {
+    ((uint8_t*)dest)[i] = *(uint8_t*)src;
+    ++src;
   }
   return dest;
 }
 
 int memcmp(const void * ptr1, const void * ptr2, unsigned int num) {
+  unsigned int i;
   int ret = 0;
-  const uint8_t *p1 = ptr1;
-  const uint8_t *p2 = ptr2;
-  for (unsigned int i = 0; i < num; i++) {
-    if (*p1 != *p2) {
+  for (i = 0; i < num; i++) {
+    if ( ((uint8_t*)ptr1)[i] != ((uint8_t*)ptr2)[i] ) {
       ret = -1;
       break;
     }
-    p1++;
-    p2++;
   }
   return ret;
 }
 
 // ********************* IRQ helpers *********************
 
-volatile bool interrupts_enabled = false;
-
+int interrupts_enabled = 0;
 void enable_interrupts(void) {
-  interrupts_enabled = true;
+  interrupts_enabled = 1;
   __enable_irq();
 }
 
-void disable_interrupts(void) {
-  interrupts_enabled = false;
+int critical_depth = 0;
+void enter_critical_section(void) {
   __disable_irq();
+  // this is safe because interrupts are disabled
+  critical_depth += 1;
 }
 
-uint8_t global_critical_depth = 0U;
-#define ENTER_CRITICAL()                                      \
-  __disable_irq();                                            \
-  global_critical_depth += 1U;
-
-#define EXIT_CRITICAL()                                       \
-  global_critical_depth -= 1U;                                \
-  if ((global_critical_depth == 0U) && interrupts_enabled) {  \
-    __enable_irq();                                           \
+void exit_critical_section(void) {
+  // this is safe because interrupts are disabled
+  critical_depth -= 1;
+  if ((critical_depth == 0) && interrupts_enabled) {
+    __enable_irq();
   }
+}
 
