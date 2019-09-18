@@ -1,7 +1,7 @@
 #!/bin/bash
-sudo apt-get install make unrar-free autoconf automake libtool gcc g++ gperf \
-    flex bison texinfo gawk ncurses-dev libexpat-dev python-dev python python-serial \
-    sed git unzip bash help2man wget bzip2
+#sudo apt-get install make unrar-free autoconf automake libtool gcc g++ gperf \
+#    flex bison texinfo gawk ncurses-dev libexpat-dev python-dev python python-serial \
+#    sed git unzip bash help2man wget bzip2
 # huh?
 sudo apt-get install libtool
 sudo apt-get install libtool-bin
