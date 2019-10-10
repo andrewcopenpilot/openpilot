@@ -4,7 +4,7 @@ from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import create_event, EventTypes as ET
 from selfdrive.controls.lib.vehicle_model import VehicleModel
 from selfdrive.car.gm.values import DBC, CAR, ECU, ECU_FINGERPRINT, \
-                                    SUPERCRUISE_CARS, AccState, FINGERPRINTS STOCK_LATERAL_CONTROL_MSG, STOCK_LONG_CONTROL_MSG
+                                    SUPERCRUISE_CARS, AccState, FINGERPRINTS, STOCK_LATERAL_CONTROL_MSG, STOCK_LONG_CONTROL_MSG
 from selfdrive.car.gm.carstate import CarState, CruiseButtons, get_powertrain_can_parser
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, is_ecu_disconnected, gen_empty_fingerprint
 from selfdrive.car.interfaces import CarInterfaceBase
