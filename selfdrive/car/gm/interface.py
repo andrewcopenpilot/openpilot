@@ -60,8 +60,10 @@ class CarInterface(object):
     # Presence of a camera on the object bus is ok.
     # Have to go to read_only if ASCM is online (ACC-enabled cars),
     # or camera is on powertrain bus (LKA cars without ACC).
-    ret.enableCamera = STOCK_LATERAL_CONTROL_MSG.get(candidate) not in fingerprint
-    ret.openpilotLongitudinalControl = STOCK_LONG_CONTROL_MSG.get(candidate) not in fingerprint
+    #ret.enableCamera = STOCK_LATERAL_CONTROL_MSG.get(candidate) not in fingerprint
+    #ret.openpilotLongitudinalControl = STOCK_LONG_CONTROL_MSG.get(candidate) not in fingerprint
+    ret.enableCamera = True
+    ret.openpilotLongitudinalControl = True
     tire_stiffness_factor = 0.444  # not optimized yet
     ret.safetyModelPassive = car.CarParams.SafetyModel.gmPassive
 

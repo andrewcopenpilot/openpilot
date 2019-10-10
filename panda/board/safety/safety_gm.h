@@ -55,9 +55,9 @@ static void gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   // Check if ASCM or LKA camera are online
   // on powertrain bus.
   // 384 = ASCMLKASteeringCmd
-  if ((bus_number == 0) && (addr == 384)) {
-    controls_allowed = 0;
-  }
+  //if ((bus_number == 0) && (addr == 384)) {
+  //  controls_allowed = 0;
+  //}
 
   // ACC steering wheel buttons
   if (addr == 481) {
