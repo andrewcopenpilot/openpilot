@@ -4,7 +4,7 @@ from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import create_event, EventTypes as ET
 from selfdrive.controls.lib.vehicle_model import VehicleModel
 from selfdrive.car.gm.values import DBC, CAR, ECU, ECU_FINGERPRINT, \
-                                    SUPERCRUISE_CARS, AccState, FINGERPRINTS
+                                    SUPERCRUISE_CARS, AccState, FINGERPRINTS STOCK_LATERAL_CONTROL_MSG, STOCK_LONG_CONTROL_MSG
 from selfdrive.car.gm.carstate import CarState, CruiseButtons, get_powertrain_can_parser
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, is_ecu_disconnected, gen_empty_fingerprint
 from selfdrive.car.interfaces import CarInterfaceBase
@@ -26,6 +26,7 @@ class CarInterface(CarInterfaceBase):
     self.gas_pressed_prev = False
     self.brake_pressed_prev = False
     self.acc_active_prev = 0
+    self.openpilotLongitudinalControl = False
 
     # *** init the major players ***
     canbus = CanBus()
@@ -56,12 +57,13 @@ class CarInterface(CarInterfaceBase):
     # Presence of a camera on the object bus is ok.
     # Have to go to read_only if ASCM is online (ACC-enabled cars),
     # or camera is on powertrain bus (LKA cars without ACC).
-    ret.enableCamera = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, ECU.CAM) or \
-                       has_relay or \
-                       candidate == CAR.CADILLAC_CT6
-    ret.openpilotLongitudinalControl = ret.enableCamera
+    #ret.enableCamera = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, ECU.CAM) or \
+    #                   has_relay or \
+    #                   candidate == CAR.CADILLAC_CT6
+    ret.enableCamera = True
+    ret.openpilotLongitudinalControl = False
     tire_stiffness_factor = 0.444  # not optimized yet
-    ret.safetyModelPassive = car.CarParams.SafetyModel.gmPassive
+    # ret.safetyModelPassive = car.CarParams.SafetyModel.gmPassive
 
     if candidate == CAR.VOLT:
       # supports stop and go, but initial engage must be above 18mph (which include conservatism)
@@ -167,6 +169,9 @@ class CarInterface(CarInterfaceBase):
     ret.steerActuatorDelay = 0.1  # Default delay, not measured yet
     ret.steerRateCost = 1.0
     ret.steerControlType = car.CarParams.SteerControlType.torque
+
+    if not ret.openpilotLongitudinalControl:
+      ret.minEnableSpeed = -1 # Lateral control only. PCM decides
 
     return ret
 
@@ -332,7 +337,8 @@ class CarInterface(CarInterfaceBase):
     can_sends = self.CC.update(enabled, self.CS, self.frame, \
                                c.actuators,
                                hud_v_cruise, c.hudControl.lanesVisible, \
-                               c.hudControl.leadVisible, c.hudControl.visualAlert)
+                               c.hudControl.leadVisible, c.hudControl.visualAlert, \
+                               self.openpilotLongitudinalControl)
 
     self.frame += 1
     return can_sends

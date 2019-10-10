@@ -5,7 +5,7 @@ from selfdrive.config import Conversions as CV
 from selfdrive.can.parser import CANParser
 from selfdrive.car.gm.values import DBC, CAR, parse_gear_shifter, \
                                     CruiseButtons, is_eps_status_ok, \
-                                    STEER_THRESHOLD, SUPERCRUISE_CARS
+                                    STEER_THRESHOLD
 
 def get_powertrain_can_parser(CP, canbus):
   # this function generates lists for signal, messages and initial values
@@ -29,13 +29,16 @@ def get_powertrain_can_parser(CP, canbus):
     ("PRNDL", "ECMPRDNL", 0),
     ("LKADriverAppldTrq", "PSCMStatus", 0),
     ("LKATorqueDeliveredStatus", "PSCMStatus", 0),
+    ("RollingCounter", "ASCMLKASteeringCmd", -1),
+    ("RollingCounter", "ASCMGasRegenCmd", -1),
+    ("ASCMKeepAliveAllZero", "ASCMKeepAlive", -1),
   ]
 
   if CP.carFingerprint == CAR.VOLT:
     signals += [
       ("RegenPaddle", "EBCMRegenPaddle", 0),
     ]
-  if CP.carFingerprint in SUPERCRUISE_CARS:
+  if not CP.openpilotLongitudinalControl:
     signals += [
       ("ACCCmdActive", "ASCMActiveCruiseControlStatus", 0)
     ]
@@ -62,6 +65,12 @@ class CarState():
     self.right_blinker_on = False
     self.prev_right_blinker_on = False
 
+    self.LKASteerCmdsFiltered = False
+    self.ASCMGasRegenCmdFiltered = False
+    self.ASCMRemoved = False
+    self.LKASteeringCounter = 99
+    self.ASCMGasRegenCmdCounter = 99
+
     # vEgo kalman filter
     dt = 0.01
     self.v_ego_kf = KF1D(x0=[[0.], [0.]],
@@ -71,6 +80,10 @@ class CarState():
     self.v_ego = 0.
 
   def update(self, pt_cp):
+    self.LKASteerCmdsFiltered = pt_cp.vl["ASCMLKASteeringCmd"]['RollingCounter'] == -1
+    self.ASCMGasRegenCmdFiltered = pt_cp.vl["ASCMGasRegenCmd"]['RollingCounter'] == -1
+    self.ASCMRemoved = pt_cp.vl["ASCMKeepAlive"]['ASCMKeepAliveAllZero'] == -1
+
     self.prev_cruise_buttons = self.cruise_buttons
     self.cruise_buttons = pt_cp.vl["ASCMSteeringButton"]['ACCButtons']
 
@@ -102,7 +115,7 @@ class CarState():
 
     # 0 - inactive, 1 - active, 2 - temporary limited, 3 - failed
     self.lkas_status = pt_cp.vl["PSCMStatus"]['LKATorqueDeliveredStatus']
-    self.steer_not_allowed = not is_eps_status_ok(self.lkas_status, self.car_fingerprint)
+    self.steer_not_allowed = not is_eps_status_ok(self.lkas_status, self.car_fingerprint, self.CP.openpilotLongitudinalControl)
 
     # 1 - open, 0 - closed
     self.door_all_closed = (pt_cp.vl["BCMDoorBeltStatus"]['FrontLeftDoor'] == 0 and
@@ -122,9 +135,9 @@ class CarState():
     self.left_blinker_on = pt_cp.vl["BCMTurnSignals"]['TurnSignals'] == 1
     self.right_blinker_on = pt_cp.vl["BCMTurnSignals"]['TurnSignals'] == 2
 
-    if self.car_fingerprint in SUPERCRUISE_CARS:
+    if not self.CP.openpilotLongitudinalControl:
       self.park_brake = False
-      self.main_on = False
+      self.main_on = True
       self.acc_active = pt_cp.vl["ASCMActiveCruiseControlStatus"]['ACCCmdActive']
       self.esp_disabled = False
       self.regen_pressed = False
