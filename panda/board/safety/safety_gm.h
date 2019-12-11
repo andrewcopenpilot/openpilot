@@ -15,7 +15,7 @@ const int GM_MAX_RATE_UP = 7;
 const int GM_MAX_RATE_DOWN = 17;
 const int GM_DRIVER_TORQUE_ALLOWANCE = 50;
 const int GM_DRIVER_TORQUE_FACTOR = 4;
-const int GM_MAX_GAS = 3500;
+const int GM_MAX_GAS = 3600;
 const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 350;
 
@@ -204,9 +204,9 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
         tx = 0;
       }
     }
-    if (gas_regen > GM_MAX_GAS) {
-      tx = 0;
-    }
+    //if (gas_regen > GM_MAX_GAS) {
+    //  tx = 0;
+    //}
   }
 
   // 1 allows the message through

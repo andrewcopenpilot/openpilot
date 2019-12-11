@@ -61,7 +61,7 @@ class CarInterface(CarInterfaceBase):
     #                   has_relay or \
     #                   candidate == CAR.CADILLAC_CT6
     ret.enableCamera = True
-    ret.openpilotLongitudinalControl = False
+    ret.openpilotLongitudinalControl = True
     tire_stiffness_factor = 0.444  # not optimized yet
     # ret.safetyModelPassive = car.CarParams.SafetyModel.gmPassive
 
@@ -114,7 +114,7 @@ class CarInterface(CarInterfaceBase):
       ret.centerToFront = ret.wheelbase * 0.4 # guess for tourx
 
     elif candidate == CAR.CADILLAC_ATS:
-      ret.minEnableSpeed = 18 * CV.MPH_TO_MS
+      ret.minEnableSpeed = 2 * CV.MPH_TO_MS
       ret.mass = 1601. + STD_CARGO_KG
       ret.safetyModel = car.CarParams.SafetyModel.gm
       ret.wheelbase = 2.78
@@ -170,8 +170,8 @@ class CarInterface(CarInterfaceBase):
     ret.steerRateCost = 1.0
     ret.steerControlType = car.CarParams.SteerControlType.torque
 
-    if not ret.openpilotLongitudinalControl:
-      ret.minEnableSpeed = -1 # Lateral control only. PCM decides
+    #if not ret.openpilotLongitudinalControl:
+    #  ret.minEnableSpeed = -1 # Lateral control only. PCM decides
 
     return ret
 
@@ -301,17 +301,22 @@ class CarInterface(CarInterfaceBase):
         events.append(create_event('pedalPressed', [ET.PRE_ENABLE]))
       if ret.cruiseState.standstill:
         events.append(create_event('resumeRequired', [ET.WARNING]))
-      if self.CS.pcm_acc_status == AccState.FAULTED:
-        events.append(create_event('controlsFailed', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
+      #if self.CS.pcm_acc_status == AccState.FAULTED:
+      #  events.append(create_event('controlsFailed', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
 
       # handle button presses
       for b in ret.buttonEvents:
         # do enable on both accel and decel buttons
-        if b.type in [ButtonType.accelCruise, ButtonType.decelCruise] and not b.pressed:
+        if b.type == ButtonType.accelCruise and not b.pressed:
+          if c.hudControl.setSpeed > 0:
+            events.append(create_event('buttonEnable', [ET.ENABLE]))
+        if b.type == ButtonType.decelCruise and not b.pressed:
           events.append(create_event('buttonEnable', [ET.ENABLE]))
         # do disable on button down
         if b.type == ButtonType.cancel and b.pressed:
           events.append(create_event('buttonCancel', [ET.USER_DISABLE]))
+        if b.type == ButtonType.altButton3 and b.pressed:
+          events.append(create_event('buttonCancel', [ET.RESET_V_CRUISE, ET.USER_DISABLE]))
 
     ret.events = events
 
