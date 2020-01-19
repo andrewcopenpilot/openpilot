@@ -134,6 +134,9 @@ class CarInterface(CarInterfaceBase):
 
     elif candidate == CAR.CADILLAC_ATS:
       ret.minEnableSpeed = 18 * CV.MPH_TO_MS
+      if ret.ecuInterceptorBusPT:
+        # engage speed is decided by pcm
+        ret.minEnableSpeed = -1.
       ret.mass = 1601. + STD_CARGO_KG
       ret.safetyModel = car.CarParams.SafetyModel.gm
       ret.wheelbase = 2.78
@@ -289,11 +292,27 @@ class CarInterface(CarInterfaceBase):
     if ret.seatbeltUnlatched:
       events.append(create_event('seatbeltNotLatched', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
 
-    if self.CS.car_fingerprint in SUPERCRUISE_CARS:
+    if self.CS.car_fingerprint in SUPERCRUISE_CARS or self.CP.ecuInterceptorBusPT:
       if self.CS.acc_active and not self.acc_active_prev:
         events.append(create_event('pcmEnable', [ET.ENABLE]))
       if not self.CS.acc_active:
         events.append(create_event('pcmDisable', [ET.USER_DISABLE]))
+
+    #elif self.CP.ecuInterceptorBusPT:
+    #  if self.CS.acc_active and not self.acc_active_prev:
+    #    events.append(create_event('pcmEnable', [ET.ENABLE]))
+    #  if not self.CS.acc_active:
+    #    events.append(create_event('pcmDisable', [ET.USER_DISABLE]))
+    #  # disable on pedals rising edge or when brake is pressed and speed isn't zero
+    #  if (ret.gasPressed and not self.gas_pressed_prev) or \
+    #    (ret.brakePressed): # and (not self.brake_pressed_prev or ret.vEgo > 0.001)):
+    #    events.append(create_event('pedalPressed', [ET.NO_ENTRY, ET.USER_DISABLE]))
+    #  if ret.gasPressed:
+    #    events.append(create_event('pedalPressed', [ET.PRE_ENABLE]))
+    #  if ret.cruiseState.standstill:
+    #    events.append(create_event('resumeRequired', [ET.WARNING]))
+    #  if self.CS.pcm_acc_status == AccState.FAULTED:
+    #    events.append(create_event('controlsFailed', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
 
     else:
       if self.CS.brake_error:
@@ -306,7 +325,7 @@ class CarInterface(CarInterfaceBase):
         events.append(create_event('wrongCarMode', [ET.NO_ENTRY, ET.USER_DISABLE]))
       if self.CS.gear_shifter == 3:
         events.append(create_event('reverseGear', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
-      if ret.vEgo < self.CP.minEnableSpeed:
+      if ret.vEgo < self.CP.minEnableSpeed or not self.CS.acc_active:
         events.append(create_event('speedTooLow', [ET.NO_ENTRY]))
       if self.CS.park_brake:
         events.append(create_event('parkBrake', [ET.NO_ENTRY, ET.USER_DISABLE]))
