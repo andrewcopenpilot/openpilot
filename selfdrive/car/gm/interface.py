@@ -8,6 +8,7 @@ from selfdrive.car.gm.values import DBC, CAR, ECU, ECU_FINGERPRINT, \
 from selfdrive.car.gm.carstate import CarState, CruiseButtons, get_powertrain_can_parser
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, is_ecu_disconnected, gen_empty_fingerprint
 from selfdrive.car.interfaces import CarInterfaceBase
+from selfdrive.swaglog import cloudlog
 
 ButtonType = car.CarState.ButtonEvent.Type
 
@@ -55,13 +56,31 @@ class CarInterface(CarInterfaceBase):
     # TODO: make a port that uses a car harness and it only intercepts the camera
     ret.communityFeature = True
 
+    # TODO: Detect and differentiate between ASCM/LKA Only (Bolt)/Supercruise
     # Presence of a camera on the object bus is ok.
     # Have to go to read_only if ASCM is online (ACC-enabled cars),
     # or camera is on powertrain bus (LKA cars without ACC).
-    ret.enableCamera = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, ECU.CAM) or \
+    # ECU Interceptors negate the need for read_only
+    # ECU Interceptors send their own status on 885
+    ret.ecuInterceptorBusPT = 885 in fingerprint[0]
+    ret.ecuInterceptorBusChas = 885 in fingerprint[2]
+
+    ret.ascmDisabled = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, ECU.ASCM) or \
                        has_relay or \
                        candidate == CAR.CADILLAC_CT6
+    ret.enableCamera = ret.ascmDisabled or ret.ecuInterceptorBusPT
     ret.openpilotLongitudinalControl = ret.enableCamera
+
+    # If an ECU Interceptor is present on the powertrain bus but not on the chassis bus, we are running with stock ACC
+    if ret.ecuInterceptorBusPT:
+      ret.openpilotLongitudinalControl = ret.ecuInterceptorBusChas
+
+    cloudlog.warning("ASCM Disabled: %r", ret.ascmDisabled)
+    cloudlog.warning("ECU Interceptor is present on the powertrain bus: %r", ret.ecuInterceptorBusPT)
+    cloudlog.warning("ECU Interceptor is present on the chassis bus: %r", ret.ecuInterceptorBusChas)
+    cloudlog.warning("ECU Camera Simulated: %r", ret.enableCamera)
+    cloudlog.warning("Open Pilot Longitudinal Control: %r", ret.openpilotLongitudinalControl)
+
     tire_stiffness_factor = 0.444  # not optimized yet
 
     if candidate == CAR.VOLT:
@@ -114,6 +133,9 @@ class CarInterface(CarInterfaceBase):
 
     elif candidate == CAR.CADILLAC_ATS:
       ret.minEnableSpeed = 18 * CV.MPH_TO_MS
+      if ret.ecuInterceptorBusPT:
+        # engage speed is decided by pcm
+        ret.minEnableSpeed = -1.
       ret.mass = 1601. + STD_CARGO_KG
       ret.safetyModel = car.CarParams.SafetyModel.gm
       ret.wheelbase = 2.78
@@ -269,11 +291,27 @@ class CarInterface(CarInterfaceBase):
     if ret.seatbeltUnlatched:
       events.append(create_event('seatbeltNotLatched', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
 
-    if self.CS.car_fingerprint in SUPERCRUISE_CARS:
+    if self.CS.car_fingerprint in SUPERCRUISE_CARS or self.CP.ecuInterceptorBusPT:
       if self.CS.acc_active and not self.acc_active_prev:
         events.append(create_event('pcmEnable', [ET.ENABLE]))
       if not self.CS.acc_active:
         events.append(create_event('pcmDisable', [ET.USER_DISABLE]))
+
+    #elif self.CP.ecuInterceptorBusPT:
+    #  if self.CS.acc_active and not self.acc_active_prev:
+    #    events.append(create_event('pcmEnable', [ET.ENABLE]))
+    #  if not self.CS.acc_active:
+    #    events.append(create_event('pcmDisable', [ET.USER_DISABLE]))
+    #  # disable on pedals rising edge or when brake is pressed and speed isn't zero
+    #  if (ret.gasPressed and not self.gas_pressed_prev) or \
+    #    (ret.brakePressed): # and (not self.brake_pressed_prev or ret.vEgo > 0.001)):
+    #    events.append(create_event('pedalPressed', [ET.NO_ENTRY, ET.USER_DISABLE]))
+    #  if ret.gasPressed:
+    #    events.append(create_event('pedalPressed', [ET.PRE_ENABLE]))
+    #  if ret.cruiseState.standstill:
+    #    events.append(create_event('resumeRequired', [ET.WARNING]))
+    #  if self.CS.pcm_acc_status == AccState.FAULTED:
+    #    events.append(create_event('controlsFailed', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
 
     else:
       if self.CS.brake_error:
@@ -286,7 +324,7 @@ class CarInterface(CarInterfaceBase):
         events.append(create_event('wrongCarMode', [ET.NO_ENTRY, ET.USER_DISABLE]))
       if self.CS.gear_shifter == 3:
         events.append(create_event('reverseGear', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
-      if ret.vEgo < self.CP.minEnableSpeed:
+      if ret.vEgo < self.CP.minEnableSpeed or not self.CS.acc_active:
         events.append(create_event('speedTooLow', [ET.NO_ENTRY]))
       if self.CS.park_brake:
         events.append(create_event('parkBrake', [ET.NO_ENTRY, ET.USER_DISABLE]))

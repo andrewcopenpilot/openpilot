@@ -39,6 +39,10 @@ def get_powertrain_can_parser(CP, canbus):
     signals += [
       ("ACCCmdActive", "ASCMActiveCruiseControlStatus", 0)
     ]
+  elif CP.ecuInterceptorBusPT:
+    signals += [
+      ("ACCCmdActiveASCM", "PTInterceptorStatus", 0)
+    ]
   else:
     signals += [
       ("TractionControlOn", "ESPStatus", 0),
@@ -56,6 +60,7 @@ class CarState():
     # initialize can parser
 
     self.car_fingerprint = CP.carFingerprint
+    self.ecu_interceptor_bus_pt = CP.ecuInterceptorBusPT
     self.cruise_buttons = CruiseButtons.UNPRESS
     self.left_blinker_on = False
     self.prev_left_blinker_on = False
@@ -129,6 +134,15 @@ class CarState():
       self.esp_disabled = False
       self.regen_pressed = False
       self.pcm_acc_status = int(self.acc_active)
+
+    elif self.ecu_interceptor_bus_pt:
+      self.park_brake = False
+      self.main_on = False
+      self.acc_active = pt_cp.vl["PTInterceptorStatus"]['ACCCmdActiveASCM']
+      self.esp_disabled = False
+      self.regen_pressed = False
+      self.pcm_acc_status = int(self.acc_active)
+
     else:
       self.park_brake = pt_cp.vl["EPBStatus"]['EPBClosed']
       self.main_on = pt_cp.vl["ECMEngineStatus"]['CruiseMainOn']
