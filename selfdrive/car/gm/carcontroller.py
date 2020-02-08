@@ -77,6 +77,7 @@ class CarController():
     self.car_fingerprint = car_fingerprint
     self.lka_icon_status_last = (False, False)
     self.steer_rate_limited = False
+    self.prev_cruise_buttons_rolling_counter = 5
 
     # Setup detection helper. Routes commands to
     # an appropriate CAN bus number.
@@ -97,6 +98,14 @@ class CarController():
     alert_out = process_hud_alert(hud_alert)
     steer = alert_out
 
+    # TODO - Auto resume spam
+    #if (self.prev_cruise_buttons_rolling_counter != CS.cruise_buttons_rolling_counter):
+    #  if enabled and CS.pcm_acc_status == 4:
+    #  #if (frame % 100 in [0, 1, 2]):
+    #    print("sending msg", file=open("/tmp/output.txt", "a"))
+    #    can_sends.append(gmcan.create_resume_spam(canbus.powertrain, CS.cruise_buttons_rolling_counter))
+    #self.prev_cruise_buttons_rolling_counter = CS.cruise_buttons_rolling_counter
+
     ### STEER ###
 
     if (frame % P.STEER_STEP) == 0:
@@ -116,7 +125,7 @@ class CarController():
           canbus, apply_steer, CS.v_ego, idx, lkas_enabled)
       else:
         can_sends.append(gmcan.create_steering_control(self.packer_pt,
-          canbus.powertrain, apply_steer, idx, lkas_enabled))
+          canbus.powertrain, apply_steer, idx, lkas_enabled, CS.CP.ecuInterceptorBusPT))
 
     ### GAS/BRAKE ###
     if CS.CP.openpilotLongitudinalControl:

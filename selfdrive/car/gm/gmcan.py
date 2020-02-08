@@ -1,6 +1,6 @@
 from selfdrive.car import make_can_msg
 
-def create_steering_control(packer, bus, apply_steer, idx, lkas_active):
+def create_steering_control(packer, bus, apply_steer, idx, lkas_active, proxy):
 
   values = {
     "LKASteeringCmdActive": lkas_active,
@@ -9,6 +9,8 @@ def create_steering_control(packer, bus, apply_steer, idx, lkas_active):
     "LKASteeringCmdChecksum": 0x1000 - (lkas_active << 11) - (apply_steer & 0x7ff) - idx
   }
 
+  #if proxy:
+  #  return packer.make_can_msg("PTInterceptorASCMLKASteeringCmd", bus, values)
   return packer.make_can_msg("ASCMLKASteeringCmd", bus, values)
 
 def create_steering_control_ct6(packer, canbus, apply_steer, v_ego, idx, enabled):
@@ -40,6 +42,22 @@ def create_steering_control_ct6(packer, canbus, apply_steer, v_ego, idx, enabled
 def create_adas_keepalive(bus):
   dat = b"\x00\x00\x00\x00\x00\x00\x00"
   return [make_can_msg(0x409, dat, bus), make_can_msg(0x40a, dat, bus)]
+
+def create_resume_spam(bus, idx):
+
+  dat0 = b"\x00\x00\x00\x01\x00\x2c\xbf"
+  dat1 = b"\x00\x00\x00\x01\x01\x21\xee"
+  dat2 = b"\x00\x00\x00\x01\x02\x26\xdd"
+  dat3 = b"\x00\x00\x00\x01\x03\x2b\xcc"
+  dat = [dat0, dat1, dat2, dat3]
+
+  msgs = []
+  for i in range(4):
+    spam_idx = (idx + i + 1) % 4
+    msgs += make_can_msg(0x1e1, dat[int(spam_idx)], bus)
+
+  return msgs
+
 
 def create_gas_regen_command(packer, bus, throttle, idx, acc_engaged, at_full_stop, proxy):
   values = {

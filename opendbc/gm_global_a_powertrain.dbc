@@ -80,6 +80,12 @@ BO_ 381 ESPStatus: 6 K20_ECM
  SG_ TractionControlOn : 5|1@0+ (1,0) [0|0] "" NEO
  SG_ MSG17D_AccPower : 35|12@0- (1,0) [0|0] "" NEO
 
+BO_ 383 PTInterceptorASCMLKASteeringCmd: 4 NEO
+ SG_ RollingCounter : 5|2@0+ (1,0) [0|0] "" PT_INTERCEPTOR
+ SG_ LKASteeringCmdChecksum : 19|12@0+ (1,0) [0|0] "" PT_INTERCEPTOR
+ SG_ LKASteeringCmdActive : 3|1@0+ (1,0) [0|0] "" PT_INTERCEPTOR
+ SG_ LKASteeringCmd : 2|11@0- (1,0) [0|0] "" PT_INTERCEPTOR
+
 BO_ 384 ASCMLKASteeringCmd: 4 NEO
  SG_ RollingCounter : 5|2@0+ (1,0) [0|0] "" NEO
  SG_ LKASteeringCmdChecksum : 19|12@0+ (1,0) [0|0] "" NEO
@@ -109,6 +115,7 @@ BO_ 481 ASCMSteeringButton: 7 K124_ASCM
  SG_ LKAButton : 23|1@0+ (1,0) [0|0] "" NEO
  SG_ ACCButtons : 46|3@0+ (1,0) [0|0] "" NEO
  SG_ DriveModeButton : 39|1@0+ (1,0) [0|1] "" XXX
+ SG_ RollingCounter : 32|2@1+ (1,0) [0|3] "" XXX
 
 BO_ 485 PSCMSteeringAngle: 8 K43_PSCM
  SG_ SteeringWheelAngle : 15|16@0- (0.0625,0) [-540|540] "deg" NEO
@@ -211,10 +218,11 @@ BO_ 1912 PSCM_778: 8 K43_PSCM
 
 BO_ 1930 ASCM_78A: 7 K124_ASCM
 
+BO_TX_BU_ 383 : NEO,PT_INTERCEPTOR;
 BO_TX_BU_ 384 : K124_ASCM,NEO;
-BO_TX_BU_ 714 : NEO, PT_INTERCEPTOR;
+BO_TX_BU_ 714 : NEO,PT_INTERCEPTOR;
 BO_TX_BU_ 715 : NEO,K124_ASCM;
-BO_TX_BU_ 879 : NEO, PT_INTERCEPTOR;
+BO_TX_BU_ 879 : NEO,PT_INTERCEPTOR;
 BO_TX_BU_ 880 : NEO,K124_ASCM;
 BO_TX_BU_ 1033 : K124_ASCM,NEO;
 
@@ -233,6 +241,7 @@ VAL_ 309 ESPButton 1 "Active" 0 "Inactive" ;
 VAL_ 320 Intellibeam 1 "Active" 0 "Inactive" ;
 VAL_ 320 HighBeamsActive 1 "Active" 0 "Inactive" ;
 VAL_ 320 HighBeamsTemporary 1 "Active" 0 "Inactive" ;
+VAL_ 383 LKASteeringCmdActive 1 "Active" 0 "Inactive" ;
 VAL_ 384 LKASteeringCmdActive 1 "Active" 0 "Inactive" ;
 VAL_ 388 HandsOffSWDetectionMode 2 "Failed" 1 "Enabled" 0 "Disabled" ;
 VAL_ 388 HandsOffSWlDetectionStatus 1 "Hands On" 0 "Hands Off" ;
