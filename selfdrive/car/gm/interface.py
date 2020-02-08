@@ -8,6 +8,7 @@ from selfdrive.car.gm.values import DBC, CAR, Ecu, ECU_FINGERPRINT, \
 from selfdrive.car.gm.carstate import CarState, CruiseButtons, get_powertrain_can_parser
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, is_ecu_disconnected, gen_empty_fingerprint
 from selfdrive.car.interfaces import CarInterfaceBase
+from selfdrive.swaglog import cloudlog
 
 ButtonType = car.CarState.ButtonEvent.Type
 
@@ -55,13 +56,31 @@ class CarInterface(CarInterfaceBase):
     # TODO: make a port that uses a car harness and it only intercepts the camera
     ret.communityFeature = True
 
+    # TODO: Detect and differentiate between ASCM/LKA Only (Bolt)/Supercruise
     # Presence of a camera on the object bus is ok.
     # Have to go to read_only if ASCM is online (ACC-enabled cars),
     # or camera is on powertrain bus (LKA cars without ACC).
-    ret.enableCamera = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.fwdCamera) or \
+    # ECU Interceptors negate the need for read_only
+    # ECU Interceptors send their own status on 885
+    ret.ecuInterceptorBusPT = 885 in fingerprint[0]
+    ret.ecuInterceptorBusChas = 885 in fingerprint[2]
+
+    ret.ascmDisabled = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.ASCM) or \
                        has_relay or \
                        candidate == CAR.CADILLAC_CT6
+    ret.enableCamera = ret.ascmDisabled or ret.ecuInterceptorBusPT
     ret.openpilotLongitudinalControl = ret.enableCamera
+
+    # If an ECU Interceptor is present on the powertrain bus but not on the chassis bus, we are running with stock ACC
+    if ret.ecuInterceptorBusPT:
+      ret.openpilotLongitudinalControl = ret.ecuInterceptorBusChas
+
+    cloudlog.warning("ASCM Disabled: %r", ret.ascmDisabled)
+    cloudlog.warning("ECU Interceptor is present on the powertrain bus: %r", ret.ecuInterceptorBusPT)
+    cloudlog.warning("ECU Interceptor is present on the chassis bus: %r", ret.ecuInterceptorBusChas)
+    cloudlog.warning("ECU Camera Simulated: %r", ret.enableCamera)
+    cloudlog.warning("Open Pilot Longitudinal Control: %r", ret.openpilotLongitudinalControl)
+
     tire_stiffness_factor = 0.444  # not optimized yet
 
     if candidate == CAR.VOLT:
@@ -114,6 +133,9 @@ class CarInterface(CarInterfaceBase):
 
     elif candidate == CAR.CADILLAC_ATS:
       ret.minEnableSpeed = 18 * CV.MPH_TO_MS
+      if ret.ecuInterceptorBusPT:
+        # engage speed is decided by pcm
+        ret.minEnableSpeed = -1.
       ret.mass = 1601. + STD_CARGO_KG
       ret.safetyModel = car.CarParams.SafetyModel.gm
       ret.wheelbase = 2.78
@@ -275,6 +297,10 @@ class CarInterface(CarInterfaceBase):
       if not self.CS.acc_active:
         events.append(create_event('pcmDisable', [ET.USER_DISABLE]))
 
+    #elif self.CP.ecuInterceptorBusPT:
+    #  if not self.CS.acc_active:
+    #    events.append(create_event('speedTooLow', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
+
     else:
       if self.CS.brake_error:
         events.append(create_event('brakeUnavailable', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE, ET.PERMANENT]))
@@ -296,7 +322,7 @@ class CarInterface(CarInterfaceBase):
         events.append(create_event('pedalPressed', [ET.NO_ENTRY, ET.USER_DISABLE]))
       if ret.gasPressed:
         events.append(create_event('pedalPressed', [ET.PRE_ENABLE]))
-      if ret.cruiseState.standstill:
+      if self.CS.pcm_acc_status == AccState.STANDSTILL:
         events.append(create_event('resumeRequired', [ET.WARNING]))
       if self.CS.pcm_acc_status == AccState.FAULTED:
         events.append(create_event('controlsFailed', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))

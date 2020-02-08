@@ -21,6 +21,7 @@ def get_powertrain_can_parser(CP, canbus):
     ("TurnSignals", "BCMTurnSignals", 0),
     ("AcceleratorPedal", "AcceleratorPedal", 0),
     ("ACCButtons", "ASCMSteeringButton", CruiseButtons.UNPRESS),
+    ("RollingCounter", "ASCMSteeringButton", 0),
     ("SteeringWheelAngle", "PSCMSteeringAngle", 0),
     ("FLWheelSpd", "EBCMWheelSpdFront", 0),
     ("FRWheelSpd", "EBCMWheelSpdFront", 0),
@@ -31,6 +32,10 @@ def get_powertrain_can_parser(CP, canbus):
     ("LKATorqueDeliveredStatus", "PSCMStatus", 0),
   ]
 
+  if CP.ecuInterceptorBusPT:
+    signals += [
+      ("ACCCmdActiveASCM", "PTInterceptorStatus", 0)
+    ]
   if CP.carFingerprint == CAR.VOLT:
     signals += [
       ("RegenPaddle", "EBCMRegenPaddle", 0),
@@ -56,7 +61,9 @@ class CarState():
     # initialize can parser
 
     self.car_fingerprint = CP.carFingerprint
+    self.ecu_interceptor_bus_pt = CP.ecuInterceptorBusPT
     self.cruise_buttons = CruiseButtons.UNPRESS
+    self.cruise_buttons_rolling_counter = 0
     self.left_blinker_on = False
     self.prev_left_blinker_on = False
     self.right_blinker_on = False
@@ -73,6 +80,7 @@ class CarState():
   def update(self, pt_cp):
     self.prev_cruise_buttons = self.cruise_buttons
     self.cruise_buttons = pt_cp.vl["ASCMSteeringButton"]['ACCButtons']
+    self.cruise_buttons_rolling_counter = pt_cp.vl["ASCMSteeringButton"]['RollingCounter']
 
     self.v_wheel_fl = pt_cp.vl["EBCMWheelSpdFront"]['FLWheelSpd'] * CV.KPH_TO_MS
     self.v_wheel_fr = pt_cp.vl["EBCMWheelSpdFront"]['FRWheelSpd'] * CV.KPH_TO_MS
@@ -129,6 +137,15 @@ class CarState():
       self.esp_disabled = False
       self.regen_pressed = False
       self.pcm_acc_status = int(self.acc_active)
+
+    #elif self.ecu_interceptor_bus_pt:
+    #  self.park_brake = False
+    #  self.main_on = False
+    #  self.acc_active = pt_cp.vl["PTInterceptorStatus"]['ACCCmdActiveASCM']
+    #  self.esp_disabled = False
+    #  self.regen_pressed = False
+    #  self.pcm_acc_status = int(self.acc_active)
+
     else:
       self.park_brake = pt_cp.vl["EPBStatus"]['EPBClosed']
       self.main_on = pt_cp.vl["ECMEngineStatus"]['CruiseMainOn']

@@ -374,6 +374,9 @@ struct CarParams {
   radarTimeStep @45: Float32 = 0.05;  # time delta between radar updates, 20Hz is very standard
   communityFeature @46: Bool;  # true if a community maintained feature is detected
   fingerprintSource @49: FingerprintSource;
+  ecuInterceptorBusPT @50: Bool; #Safety/ACC ECU Interceptor is present on the powertrain bus
+  ecuInterceptorBusChas @51: Bool; #Safety/ACC ECU Interceptor is present on the chassis bus
+  ascmDisabled @52: Bool; # ASCM has been removed or unpluged
 
   struct LateralParams {
     torqueBP @0 :List(Int32);

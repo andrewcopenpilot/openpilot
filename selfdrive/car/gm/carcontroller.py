@@ -77,12 +77,12 @@ class CarController():
     self.car_fingerprint = car_fingerprint
     self.lka_icon_status_last = (False, False)
     self.steer_rate_limited = False
+    self.prev_cruise_buttons_rolling_counter = 5
 
     # Setup detection helper. Routes commands to
     # an appropriate CAN bus number.
     self.canbus = canbus
     self.params = CarControllerParams(car_fingerprint)
-
     self.packer_pt = CANPacker(DBC[car_fingerprint]['pt'])
     self.packer_ch = CANPacker(DBC[car_fingerprint]['chassis'])
 
@@ -97,6 +97,14 @@ class CarController():
 
     alert_out = process_hud_alert(hud_alert)
     steer = alert_out
+
+    # TODO - Auto resume spam
+    #if (self.prev_cruise_buttons_rolling_counter != CS.cruise_buttons_rolling_counter):
+    #  if enabled and CS.pcm_acc_status == 4:
+    #  #if (frame % 100 in [0, 1, 2]):
+    #    print("sending msg", file=open("/tmp/output.txt", "a"))
+    #    can_sends.append(gmcan.create_resume_spam(canbus.powertrain, CS.cruise_buttons_rolling_counter))
+    #self.prev_cruise_buttons_rolling_counter = CS.cruise_buttons_rolling_counter
 
     ### STEER ###
 
@@ -117,11 +125,10 @@ class CarController():
           canbus, apply_steer, CS.v_ego, idx, lkas_enabled)
       else:
         can_sends.append(gmcan.create_steering_control(self.packer_pt,
-          canbus.powertrain, apply_steer, idx, lkas_enabled))
+          canbus.powertrain, apply_steer, idx, lkas_enabled, CS.CP.ecuInterceptorBusPT))
 
     ### GAS/BRAKE ###
-
-    if self.car_fingerprint not in SUPERCRUISE_CARS:
+    if CS.CP.openpilotLongitudinalControl:
       # no output if not enabled, but keep sending keepalive messages
       # treat pedals as one
       final_pedal = actuators.gas - actuators.brake
@@ -144,33 +151,14 @@ class CarController():
 
         at_full_stop = enabled and CS.standstill
         near_stop = enabled and (CS.v_ego < P.NEAR_STOP_BRAKE_PHASE)
-        can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, canbus.chassis, apply_brake, idx, near_stop, at_full_stop))
+        can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, canbus.chassis, apply_brake, idx, near_stop, at_full_stop, CS.CP.ecuInterceptorBusChas))
 
         at_full_stop = enabled and CS.standstill
-        can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, canbus.powertrain, apply_gas, idx, enabled, at_full_stop))
+        can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, canbus.powertrain, apply_gas, idx, enabled, at_full_stop, CS.CP.ecuInterceptorBusPT))
 
       # Send dashboard UI commands (ACC status), 25hz
       if (frame % 4) == 0:
-        can_sends.append(gmcan.create_acc_dashboard_command(self.packer_pt, canbus.powertrain, enabled, hud_v_cruise * CV.MS_TO_KPH, hud_show_car))
-
-      # Radar needs to know current speed and yaw rate (50hz),
-      # and that ADAS is alive (10hz)
-      time_and_headlights_step = 10
-      tt = frame * DT_CTRL
-
-      if frame % time_and_headlights_step == 0:
-        idx = (frame // time_and_headlights_step) % 4
-        can_sends.append(gmcan.create_adas_time_status(canbus.obstacle, int((tt - self.start_time) * 60), idx))
-        can_sends.append(gmcan.create_adas_headlights_status(canbus.obstacle))
-
-      speed_and_accelerometer_step = 2
-      if frame % speed_and_accelerometer_step == 0:
-        idx = (frame // speed_and_accelerometer_step) % 4
-        can_sends.append(gmcan.create_adas_steering_status(canbus.obstacle, idx))
-        can_sends.append(gmcan.create_adas_accelerometer_speed_status(canbus.obstacle, CS.v_ego, idx))
-
-      if frame % P.ADAS_KEEPALIVE_STEP == 0:
-        can_sends += gmcan.create_adas_keepalive(canbus.powertrain)
+        can_sends.append(gmcan.create_acc_dashboard_command(self.packer_pt, canbus.powertrain, enabled, hud_v_cruise * CV.MS_TO_KPH, hud_show_car, CS.CP.ecuInterceptorBusPT))
 
       # Show green icon when LKA torque is applied, and
       # alarming orange icon when approaching torque limit.
@@ -183,5 +171,26 @@ class CarController():
           or lka_icon_status != self.lka_icon_status_last:
         can_sends.append(gmcan.create_lka_icon_command(canbus.sw_gmlan, lka_active, lka_critical, steer))
         self.lka_icon_status_last = lka_icon_status
+
+      # LKA only cars or cars with ASCM Interceptors don't need to emulate these functions
+      if CS.CP.ascmDisabled:
+        ## Radar needs to know current speed and yaw rate (50hz),
+        ## and that ADAS is alive (10hz)
+        time_and_headlights_step = 10
+        tt = frame * DT_CTRL
+
+        if frame % time_and_headlights_step == 0:
+          idx = (frame // time_and_headlights_step) % 4
+          can_sends.append(gmcan.create_adas_time_status(canbus.obstacle, int((tt - self.start_time) * 60), idx))
+          can_sends.append(gmcan.create_adas_headlights_status(canbus.obstacle))
+
+        speed_and_accelerometer_step = 2
+        if frame % speed_and_accelerometer_step == 0:
+          idx = (frame // speed_and_accelerometer_step) % 4
+          can_sends.append(gmcan.create_adas_steering_status(canbus.obstacle, idx))
+          can_sends.append(gmcan.create_adas_accelerometer_speed_status(canbus.obstacle, CS.v_ego, idx))
+
+        if frame % P.ADAS_KEEPALIVE_STEP == 0:
+          can_sends += gmcan.create_adas_keepalive(canbus.powertrain)
 
     return can_sends
