@@ -143,6 +143,7 @@ class CarController():
         apply_brake = 0
       else:
         apply_gas = int(round(interp(final_pedal, P.GAS_LOOKUP_BP, P.GAS_LOOKUP_V)))
+        #apply_gas = 2600
         apply_brake = int(round(interp(final_pedal, P.BRAKE_LOOKUP_BP, P.BRAKE_LOOKUP_V)))
 
       # Gas/regen and brakes - all at 25Hz

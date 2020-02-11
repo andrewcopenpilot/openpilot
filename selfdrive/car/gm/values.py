@@ -92,8 +92,9 @@ FINGERPRINTS = {
 STEER_THRESHOLD = 1.0
 
 ECU_FINGERPRINT = {
-  Ecu.ASCM: [1033], # 1033 = ASCM Keep alive
-  Ecu.fwdCamera: [800], # 800 = LKA Only AEB (Non supercruise)
+  #Ecu.ASCM: [1033], # 1033 = ASCM Keep alive
+  Ecu.fwdCamera: [1033],
+  #Ecu.fwdCamera: [800], # 800 = LKA Only AEB (Non supercruise)
 }
 
 DBC = {

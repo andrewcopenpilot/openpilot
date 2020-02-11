@@ -9,8 +9,8 @@ def create_steering_control(packer, bus, apply_steer, idx, lkas_active, proxy):
     "LKASteeringCmdChecksum": 0x1000 - (lkas_active << 11) - (apply_steer & 0x7ff) - idx
   }
 
-  #if proxy:
-  #  return packer.make_can_msg("PTInterceptorASCMLKASteeringCmd", bus, values)
+  if proxy:
+    return packer.make_can_msg("PTInterceptorASCMLKASteeringCmd", bus, values)
   return packer.make_can_msg("ASCMLKASteeringCmd", bus, values)
 
 def create_steering_control_ct6(packer, canbus, apply_steer, v_ego, idx, enabled):
@@ -86,8 +86,8 @@ def create_friction_brake_command(packer, bus, apply_brake, idx, near_stop, at_f
   else:
     mode = 0xa
 
-    if at_full_stop:
-      mode = 0xd
+  if at_full_stop:
+    mode = 0xd
     # TODO: this is to have GM bringing the car to complete stop,
     # but currently it conflicts with OP controls, so turned off.
     #elif near_stop:
