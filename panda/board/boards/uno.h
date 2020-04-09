@@ -26,6 +26,9 @@ void uno_enable_can_transciever(uint8_t transciever, bool enabled) {
 
 void uno_enable_can_transcievers(bool enabled) {
   for(uint8_t i=1U; i<=4U; i++){
+    if (!enabled && i == 3U) { // leave transciever 3 enabled to detect CAN ignition
+      continue;
+    }
     uno_enable_can_transciever(i, enabled);
   }
 }

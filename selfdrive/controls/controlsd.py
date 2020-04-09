@@ -465,6 +465,7 @@ def controlsd_thread(sm=None, pm=None, can_sock=None):
   print("Waiting for CAN messages...")
   messaging.get_one_can(can_sock)
 
+  has_relay = False
   CI, CP = get_car(can_sock, pm.sock['sendcan'], has_relay)
 
   car_recognized = CP.carName != 'mock'

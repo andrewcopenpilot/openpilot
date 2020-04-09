@@ -143,6 +143,14 @@ void set_safety_mode(uint16_t mode, int16_t param) {
       }
       can_silent = ALL_CAN_LIVE;
       break;
+    case SAFETY_GM:
+      set_intercept_relay(false); // GM uses all 3 CAN channels, no relay
+      heartbeat_counter = 0U;
+      if (board_has_obd()) {
+        current_board->set_can_mode(CAN_MODE_OBD_CAN2);
+      }
+      can_silent = ALL_CAN_LIVE;
+      break;
     default:
       set_intercept_relay(true);
       heartbeat_counter = 0U;

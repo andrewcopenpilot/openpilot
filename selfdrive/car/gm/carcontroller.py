@@ -170,7 +170,7 @@ class CarController():
       lka_icon_status = (lka_active, lka_critical)
       if frame % P.CAMERA_KEEPALIVE_STEP == 0 \
           or lka_icon_status != self.lka_icon_status_last:
-        can_sends.append(gmcan.create_lka_icon_command(canbus.sw_gmlan, lka_active, lka_critical, steer))
+        #can_sends.append(gmcan.create_lka_icon_command(canbus.sw_gmlan, lka_active, lka_critical, steer))
         self.lka_icon_status_last = lka_icon_status
 
       # LKA only cars or cars with ASCM Interceptors don't need to emulate these functions
