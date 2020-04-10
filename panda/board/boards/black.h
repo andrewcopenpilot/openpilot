@@ -5,13 +5,23 @@
 void black_enable_can_transciever(uint8_t transciever, bool enabled) {
   switch (transciever){
     case 1U:
-      set_gpio_output(GPIOC, 1, !enabled);
+      if (car_harness_status == HARNESS_STATUS_NORMAL) {
+        set_gpio_output(GPIOA, 0, !enabled);
+      }
+      else {
+        set_gpio_output(GPIOC, 1, !enabled);
+      }
       break;
     case 2U:
       set_gpio_output(GPIOC, 13, !enabled);
       break;
     case 3U:
-      set_gpio_output(GPIOA, 0, !enabled);
+      if (car_harness_status == HARNESS_STATUS_NORMAL) {
+        set_gpio_output(GPIOC, 1, !enabled);
+      }
+      else {
+        set_gpio_output(GPIOA, 0, !enabled);
+      }
       break;
     case 4U:
       set_gpio_output(GPIOB, 10, !enabled);
@@ -23,10 +33,8 @@ void black_enable_can_transciever(uint8_t transciever, bool enabled) {
 }
 
 void black_enable_can_transcievers(bool enabled) {
-  for(uint8_t i=1U; i<=4U; i++) {
-    if (!enabled && i == 3U) { // leave transciever 3 enabled to detect CAN ignition
-      continue;
-    }
+  uint8_t t1 = enabled ? 1U : 2U;  // leave transciever 1 enabled to detect CAN ignition
+  for(uint8_t i=t1; i<=4U; i++) {
     black_enable_can_transciever(i, enabled);
   }
 }
