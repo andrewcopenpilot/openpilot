@@ -5,7 +5,7 @@
 void black_enable_can_transciever(uint8_t transciever, bool enabled) {
   switch (transciever){
     case 1U:
-      if (car_harness_status == HARNESS_STATUS_NORMAL) {
+      if (car_harness_status == HARNESS_STATUS_FLIPPED) {
         set_gpio_output(GPIOA, 0, !enabled);
       }
       else {
@@ -16,7 +16,7 @@ void black_enable_can_transciever(uint8_t transciever, bool enabled) {
       set_gpio_output(GPIOC, 13, !enabled);
       break;
     case 3U:
-      if (car_harness_status == HARNESS_STATUS_NORMAL) {
+      if (car_harness_status == HARNESS_STATUS_FLIPPED) {
         set_gpio_output(GPIOC, 1, !enabled);
       }
       else {
