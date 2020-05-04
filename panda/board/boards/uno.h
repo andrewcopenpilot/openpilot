@@ -28,7 +28,7 @@ void uno_enable_can_transcievers(bool enabled) {
   if (!enabled) {
     return;
   }
-  for(uint8_t t1=1U; i<=4U; i++){
+  for(uint8_t i=1U; i<=4U; i++){
     uno_enable_can_transciever(i, enabled);
   }
 }
