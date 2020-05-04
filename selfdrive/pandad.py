@@ -27,6 +27,7 @@ def get_expected_signature(fw_fn=None):
 
 
 def update_panda():
+  return
   panda = None
   panda_dfu = None
 

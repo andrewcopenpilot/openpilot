@@ -68,7 +68,7 @@ def create_gas_regen_command(packer, bus, throttle, idx, acc_engaged, at_full_st
     return msg
   return packer.make_can_msg("ASCMGasRegenCmd", bus, values)
 
-def create_friction_brake_command(packer, bus, apply_brake, idx, near_stop, at_full_stop):
+def create_friction_brake_command(packer, bus, apply_brake, idx, near_stop, at_full_stop, proxy):
 
   if apply_brake == 0:
     mode = 0x1
