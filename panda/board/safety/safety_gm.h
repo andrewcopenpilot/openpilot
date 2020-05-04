@@ -18,8 +18,8 @@ const int GM_DRIVER_TORQUE_FACTOR = 4;
 const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 350;
-const AddrBus GM_TX_MSGS[] = {{384, 0}, {1033, 0}, {1034, 0}, {715, 0}, {880, 0},  // pt bus
-                              {161, 1}, {774, 1}, {776, 1}, {784, 1},   // obs bus
+const AddrBus GM_TX_MSGS[] = {{384, 0}, {383, 0}, {481, 0}, {1033, 0}, {1034, 0}, {715, 0}, {714, 0}, {880, 0}, {879, 0},  // pt bus
+                              {161, 1}, {774, 1}, {776, 1}, {784, 1}, {788, 1}, {383, 1}, {714, 1}, {879, 1},  // obs bus
                               {789, 2},  // ch bus
                               {0x104c006c, 3}, {0x10400060, 3}};  // gmlan
 
@@ -30,6 +30,7 @@ AddrCheckStruct gm_rx_checks[] = {
   {.addr = {481}, .bus = 0, .expected_timestep = 100000U},
   {.addr = {241}, .bus = 0, .expected_timestep = 100000U},
   {.addr = {417}, .bus = 0, .expected_timestep = 100000U},
+  {.addr = {885}, .bus = 0, .expected_timestep = 100000U},
 };
 const int GM_RX_CHECK_LEN = sizeof(gm_rx_checks) / sizeof(gm_rx_checks[0]);
 
@@ -38,6 +39,7 @@ int gm_rt_torque_last = 0;
 int gm_desired_torque_last = 0;
 uint32_t gm_ts_last = 0;
 struct sample_t gm_torque_driver;         // last few driver torques measured
+bool pt_ecu_interceptor = false;
 
 static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 
@@ -105,11 +107,17 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
       }
     }
 
+    // Check for ASCM ECU Interceptor Status
+    // TODO: Add second check for chas bus interceptor. If only PT bus has an interceptor, we should only allow steering commands
+    if ((bus == 0) && (addr == 885)) {
+      pt_ecu_interceptor = true;
+    }
+
     // Check if ASCM or LKA camera are online
     // on powertrain bus.
     // 384 = ASCMLKASteeringCmd
     // 715 = ASCMGasRegenCmd
-    if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && ((addr == 384) || (addr == 715))) {
+    if ((safety_mode_cnt > RELAY_TRNS_TIMEOUT) && ((addr == 384) || (addr == 715)) && !pt_ecu_interceptor) {
       relay_malfunction = true;
     }
   }
@@ -142,7 +150,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   bool current_controls_allowed = controls_allowed && !pedal_pressed;
 
   // BRAKE: safety check
-  if (addr == 789) {
+  if ((addr == 789) || (addr == 788)) {
     int brake = ((GET_BYTE(to_send, 0) & 0xFU) << 8) + GET_BYTE(to_send, 1);
     brake = (0x1000 - brake) & 0xFFF;
     if (!current_controls_allowed) {
@@ -156,7 +164,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
 
   // LKA STEER: safety check
-  if (addr == 384) {
+  if ((addr == 384) || (addr == 383)) {
     int desired_torque = ((GET_BYTE(to_send, 0) & 0x7U) << 8) + GET_BYTE(to_send, 1);
     uint32_t ts = TIM2->CNT;
     bool violation = 0;
@@ -204,7 +212,7 @@ static int gm_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   }
 
   // GAS/REGEN: safety check
-  if (addr == 715) {
+  if ((addr == 715) || (addr == 714)) {
     int gas_regen = ((GET_BYTE(to_send, 2) & 0x7FU) << 5) + ((GET_BYTE(to_send, 3) & 0xF8U) >> 3);
     // Disabled message is !engaged with gas
     // value that corresponds to max regen.
