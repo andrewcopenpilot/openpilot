@@ -25,11 +25,14 @@ void uno_enable_can_transciever(uint8_t transciever, bool enabled) {
 }
 
 void uno_enable_can_transcievers(bool enabled) {
-  for(uint8_t i=0U; i<=4U; i++){
+  for(uint8_t i=1U; i<=4U; i++){
+    puts("here\n");
     // Leave main CAN always on for CAN-based ignition detection
-    if((car_harness_status == HARNESS_STATUS_FLIPPED) ? (i == 2U) : (i == 0U)){
+    if((car_harness_status == HARNESS_STATUS_FLIPPED) ? (i == 3U) : (i == 1U)){
+      puts("1\n");
       uno_enable_can_transciever(i, true);
     } else {
+      puts("2\n");
       uno_enable_can_transciever(i, enabled);
     }
   }
