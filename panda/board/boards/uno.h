@@ -4,8 +4,6 @@
 #define BOOTKICK_TIME 3U
 uint8_t bootkick_timer = 0U;
 
-uint8_t transciever_lookup[] = {1U, 2U, 3U, 4U}; // Map transciever to bus
-
 void uno_enable_can_transciever(uint8_t transciever, bool enabled) {
   switch (transciever){
     case 1U:
@@ -27,9 +25,13 @@ void uno_enable_can_transciever(uint8_t transciever, bool enabled) {
 }
 
 void uno_enable_can_transcievers(bool enabled) {
-  uint8_t first_bus = enabled ? 0U : 1U;  // leave transciever for bus 0 enabled to detect CAN ignition
-  for(uint8_t bus=first_bus; bus<=3U; bus++) {
-    uno_enable_can_transciever(transciever_lookup[bus], enabled);
+  for(uint8_t i=0U; i<=4U; i++){
+    // Leave main CAN always on for CAN-based ignition detection
+    if((car_harness_status == HARNESS_STATUS_FLIPPED) ? (i == 2U) : (i == 0U)){
+      uno_enable_can_transciever(i, true);
+    } else {
+      uno_enable_can_transciever(i, enabled);
+    }
   }
 }
 
@@ -235,8 +237,6 @@ void uno_init(void) {
   // flip CAN0 and CAN2 if we are flipped
   if (car_harness_status == HARNESS_STATUS_FLIPPED) {
     can_flip_buses(0, 2);
-    transciever_lookup[0] = 3U;
-    transciever_lookup[2] = 1U;
   }
 
   // init multiplexer
