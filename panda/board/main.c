@@ -135,6 +135,7 @@ void set_safety_mode(uint16_t mode, int16_t param) {
       }
       can_silent = ALL_CAN_LIVE;
       break;
+    case SAFETY_GM:
     case SAFETY_ELM327:
       set_intercept_relay(false);
       heartbeat_counter = 0U;
