@@ -96,6 +96,8 @@ class SERVICE_IDENTIFIER_RESPONSE(IntEnum):
   DEVICE_CONTROL = 0xEE
 
 
+# Forward Camera Module
+
 # Tester (openpilot) bus 1 MID 0x241 (send messages here)
 # ECU is bus 1 MID 0x641 (read messages from here)
 
@@ -105,7 +107,7 @@ class SERVICE_IDENTIFIER_RESPONSE(IntEnum):
 # Request Software Module 1 Identifier by sending 0x021AC1
 # Read message value starting with 0x065AC1 remaining 4 bytes are FW version
 
-# Request Software Module 1 Identifier by sending 0x021AC2
+# Request Software Module 2 Identifier by sending 0x021AC2
 # Read message value starting with 0x065AC2 remaining 4 bytes are FW version
 
 
@@ -115,16 +117,44 @@ class SERVICE_IDENTIFIER_RESPONSE(IntEnum):
 
 
 
+# ECM
 
+# Tester (openpilot) bus 1 MID 0x7e0 (send messages here)
+# ECU is bus 1 MID 0x7e8 (read messages from here)
 
+# Start session by sending 0x013E
+# Verify session started by reading 0x017E 
 
+# Request Software Module 1 Identifier by sending 0x021AC1
+# Read message value starting with 0x065AC1 remaining 4 bytes are FW version
 
+# Request Software Module 2 Identifier by sending 0x021AC2
+# Read message value starting with 0x065AC2 remaining 4 bytes are FW version
 
+# Request Software Module 3 Identifier by sending 0x021AC3
+# Read message value starting with 0x065AC3 remaining 4 bytes are FW version
 
+# Request Software Module 4 Identifier by sending 0x021AC4
+# Read message value starting with 0x065AC4 remaining 4 bytes are FW version
 
+# Request Software Module 5 Identifier by sending 0x021AC5
+# Read message value starting with 0x065AC5 remaining 4 bytes are FW version
 
+# Request Software Module 6 Identifier by sending 0x021AC6
+# Read message value starting with 0x065AC6 remaining 4 bytes are FW version
 
+# Request Software Module 9 Identifier by sending 0x021AC9
+# Read message value starting with 0x065AC9 remaining 4 bytes are FW version
 
+# Request Software Module 10 Identifier by sending 0x021ACA
+# Read message value starting with 0x065ACA remaining 4 bytes are FW version
+
+# Probably not needed
+# Request End Model Part Number by sending 0x021ACB
+# Read message value starting with 0x065ACB remaining 4 bytes are version
+
+# Request Base Model Part Number by sending 0x021ACC
+# Read message value starting with 0x065ACC remaining 4 bytes are version
 
 
 
