@@ -33,7 +33,7 @@ class CarInterface(CarInterfaceBase):
     # or camera is on powertrain bus (LKA cars without ACC).
     # ECU Interceptors negate the need for read_only
     # ECU Interceptors send their own status on 885
-        ret.ecuInterceptorBusPT = 885 in fingerprint[0]
+    ret.ecuInterceptorBusPT = 885 in fingerprint[0]
     ret.ecuInterceptorBusChas = 885 in fingerprint[2]
     ret.ascmDisabled = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.fwdCamera) or has_relay
     ret.enableCamera = ret.ascmDisabled or ret.ecuInterceptorBusPT
