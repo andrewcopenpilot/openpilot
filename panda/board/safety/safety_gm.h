@@ -103,7 +103,7 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // on powertrain bus.
     // 384 = ASCMLKASteeringCmd
     // 715 = ASCMGasRegenCmd
-    generic_rx_checks(((addr == 384) || (addr == 715)) && !pt_ecu_interceptor);
+    //generic_rx_checks(((addr == 384) || (addr == 715)) && !pt_ecu_interceptor);
   }
   return valid;
 }
