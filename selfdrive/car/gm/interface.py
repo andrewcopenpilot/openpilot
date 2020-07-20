@@ -35,7 +35,7 @@ class CarInterface(CarInterfaceBase):
     # ECU Interceptors send their own status on 885
     ret.ecuInterceptorBusPT = 885 in fingerprint[0]
     ret.ecuInterceptorBusChas = 885 in fingerprint[2]
-    ret.ascmDisabled = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.fwdCamera) or has_relay
+    ret.ascmDisabled = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.fwdCamera)
     ret.enableCamera = ret.ascmDisabled or ret.ecuInterceptorBusPT
     ret.openpilotLongitudinalControl = ret.enableCamera
 

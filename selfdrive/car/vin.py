@@ -12,6 +12,7 @@ VIN_RESPONSE = b'\x49\x02\x01'
 VIN_UNKNOWN = "0" * 17
 
 def vin_check_digit_validator(vin):
+  cloudlog.info("Checking VIN: %s", vin)
   key = {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5,
          "F": 6, "G": 7, "H": 8, "J": 1, "K": 2,
          "L": 3, "M": 4, "N": 5, "P": 7, "R": 9,
