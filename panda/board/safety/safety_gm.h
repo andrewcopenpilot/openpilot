@@ -30,9 +30,6 @@ AddrCheckStruct gm_rx_checks[] = {
   {.msg = {{481, 0, 7, .expected_timestep = 100000U}}},
   {.msg = {{241, 0, 6, .expected_timestep = 100000U}}},
   {.msg = {{417, 0, 7, .expected_timestep = 100000U}}},
-  {.msg = {{885, 0, 8, .expected_timestep = 100000U}}},
-  {.msg = {{885, 1, 8, .expected_timestep = 100000U}}},
-  {.msg = {{885, 2, 8, .expected_timestep = 100000U}}},
 };
 const int GM_RX_CHECK_LEN = sizeof(gm_rx_checks) / sizeof(gm_rx_checks[0]);
 bool pt_ecu_interceptor = false;
@@ -103,7 +100,7 @@ static int gm_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     // on powertrain bus.
     // 384 = ASCMLKASteeringCmd
     // 715 = ASCMGasRegenCmd
-    //generic_rx_checks(((addr == 384) || (addr == 715)) && !pt_ecu_interceptor);
+    generic_rx_checks(((addr == 384) || (addr == 715)) && !pt_ecu_interceptor);
   }
   return valid;
 }
