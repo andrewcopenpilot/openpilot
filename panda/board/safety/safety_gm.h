@@ -19,8 +19,8 @@ const int GM_MAX_GAS = 3072;
 const int GM_MAX_REGEN = 1404;
 const int GM_MAX_BRAKE = 350;
 const CanMsg GM_TX_MSGS[] = {{384, 0, 4}, {383, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {714, 0, 8}, {880, 0, 6}, {879, 0, 6},  // pt bus
-                             {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2}, {383, 0, 4}, {714, 0, 8}, {879, 0, 6}, // obs bus
-                             {789, 2, 5},  // ch bus
+                             {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2}, {383, 1, 4}, {714, 1, 8}, {879, 1, 6}, {788, 1, 5},  // obs bus
+                             {789, 2, 5}, {788, 2, 5},   // ch bus
                              {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
 
 // TODO: do checksum and counter checks. Add correct timestep, 0.1s for now.
