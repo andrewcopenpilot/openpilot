@@ -107,9 +107,13 @@ class CarInterface(CarInterfaceBase):
       ret.minEnableSpeed = -1.
       ret.mass = 1601. + STD_CARGO_KG
       ret.wheelbase = 2.78
-      ret.steerRatio = 15.3
+      #ret.steerRatio = 15.3 # from specs
+      ret.steerRatio = 16.38
       ret.steerRatioRear = 0.
       ret.centerToFront = ret.wheelbase * 0.49
+      ret.lateralTuning.pid.kiBP = ret.lateralTuning.pid.kpBP = [5., 35.]
+      ret.lateralTuning.pid.kiV = [0.03, 0.05]
+      ret.lateralTuning.pid.kpV = [0.07, 0.12]
 
     # TODO: get actual value, for now starting with reasonable value for
     # civic and scaling by mass and wheelbase
