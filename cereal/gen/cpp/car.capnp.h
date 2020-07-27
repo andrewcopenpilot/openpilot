@@ -2048,6 +2048,12 @@ public:
 
   inline  ::cereal::CarParams::NetworkLocation getNetworkLocation() const;
 
+  inline bool getEcuInterceptorBusPT() const;
+
+  inline bool getEcuInterceptorBusChas() const;
+
+  inline bool getAscmDisabled() const;
+
 private:
   ::capnp::_::StructReader _reader;
   template <typename, ::capnp::Kind>
@@ -2276,6 +2282,15 @@ public:
 
   inline  ::cereal::CarParams::NetworkLocation getNetworkLocation();
   inline void setNetworkLocation( ::cereal::CarParams::NetworkLocation value);
+
+  inline bool getEcuInterceptorBusPT();
+  inline void setEcuInterceptorBusPT(bool value);
+
+  inline bool getEcuInterceptorBusChas();
+  inline void setEcuInterceptorBusChas(bool value);
+
+  inline bool getAscmDisabled();
+  inline void setAscmDisabled(bool value);
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -5652,6 +5667,48 @@ inline  ::cereal::CarParams::NetworkLocation CarParams::Builder::getNetworkLocat
 inline void CarParams::Builder::setNetworkLocation( ::cereal::CarParams::NetworkLocation value) {
   _builder.setDataField< ::cereal::CarParams::NetworkLocation>(
       ::capnp::bounded<40>() * ::capnp::ELEMENTS, value);
+}
+
+inline bool CarParams::Reader::getEcuInterceptorBusPT() const {
+  return _reader.getDataField<bool>(
+      ::capnp::bounded<13>() * ::capnp::ELEMENTS);
+}
+
+inline bool CarParams::Builder::getEcuInterceptorBusPT() {
+  return _builder.getDataField<bool>(
+      ::capnp::bounded<13>() * ::capnp::ELEMENTS);
+}
+inline void CarParams::Builder::setEcuInterceptorBusPT(bool value) {
+  _builder.setDataField<bool>(
+      ::capnp::bounded<13>() * ::capnp::ELEMENTS, value);
+}
+
+inline bool CarParams::Reader::getEcuInterceptorBusChas() const {
+  return _reader.getDataField<bool>(
+      ::capnp::bounded<14>() * ::capnp::ELEMENTS);
+}
+
+inline bool CarParams::Builder::getEcuInterceptorBusChas() {
+  return _builder.getDataField<bool>(
+      ::capnp::bounded<14>() * ::capnp::ELEMENTS);
+}
+inline void CarParams::Builder::setEcuInterceptorBusChas(bool value) {
+  _builder.setDataField<bool>(
+      ::capnp::bounded<14>() * ::capnp::ELEMENTS, value);
+}
+
+inline bool CarParams::Reader::getAscmDisabled() const {
+  return _reader.getDataField<bool>(
+      ::capnp::bounded<15>() * ::capnp::ELEMENTS);
+}
+
+inline bool CarParams::Builder::getAscmDisabled() {
+  return _builder.getDataField<bool>(
+      ::capnp::bounded<15>() * ::capnp::ELEMENTS);
+}
+inline void CarParams::Builder::setAscmDisabled(bool value) {
+  _builder.setDataField<bool>(
+      ::capnp::bounded<15>() * ::capnp::ELEMENTS, value);
 }
 
 inline bool CarParams::LateralParams::Reader::hasTorqueBP() const {

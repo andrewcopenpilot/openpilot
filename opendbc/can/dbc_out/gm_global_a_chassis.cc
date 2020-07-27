@@ -28,6 +28,52 @@ const Signal sigs_560[] = {
       .type = SignalType::DEFAULT,
     },
 };
+const Signal sigs_788[] = {
+    {
+      .name = "FrictionBrakeCmd",
+      .b1 = 4,
+      .b2 = 12,
+      .bo = 48,
+      .is_signed = true,
+      .factor = 1,
+      .offset = 0,
+      .is_little_endian = false,
+      .type = SignalType::DEFAULT,
+    },
+    {
+      .name = "FrictionBrakeMode",
+      .b1 = 0,
+      .b2 = 4,
+      .bo = 60,
+      .is_signed = false,
+      .factor = 1,
+      .offset = 0,
+      .is_little_endian = false,
+      .type = SignalType::DEFAULT,
+    },
+    {
+      .name = "FrictionBrakeChecksum",
+      .b1 = 16,
+      .b2 = 16,
+      .bo = 32,
+      .is_signed = false,
+      .factor = 1,
+      .offset = 0,
+      .is_little_endian = false,
+      .type = SignalType::DEFAULT,
+    },
+    {
+      .name = "RollingCounter",
+      .b1 = 38,
+      .b2 = 2,
+      .bo = 24,
+      .is_signed = false,
+      .factor = 1,
+      .offset = 0,
+      .is_little_endian = false,
+      .type = SignalType::DEFAULT,
+    },
+};
 const Signal sigs_789[] = {
     {
       .name = "FrictionBrakeCmd",
@@ -124,6 +170,13 @@ const Msg msgs[] = {
     .size = 6,
     .num_sigs = ARRAYSIZE(sigs_560),
     .sigs = sigs_560,
+  },
+  {
+    .name = "ChasInterceptorFrictionBrakeCmd",
+    .address = 0x314,
+    .size = 5,
+    .num_sigs = ARRAYSIZE(sigs_788),
+    .sigs = sigs_788,
   },
   {
     .name = "EBCMFrictionBrakeCmd",
