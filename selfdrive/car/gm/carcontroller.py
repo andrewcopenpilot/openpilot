@@ -72,64 +72,67 @@ class CarController():
       self.apply_steer_last = apply_steer
       idx = (frame // P.STEER_STEP) % 4
 
-      can_sends.append(gmcan.create_steering_control(self.packer_pt, CanBus.POWERTRAIN, apply_steer, idx, lkas_enabled))
+      can_sends.append(gmcan.create_steering_control(self.packer_pt, CanBus.POWERTRAIN, apply_steer, idx, lkas_enabled, CS.CP.ecuInterceptorBusPT))
 
     # GAS/BRAKE
-    # no output if not enabled, but keep sending keepalive messages
-    # treat pedals as one
-    final_pedal = actuators.gas - actuators.brake
+    if CS.CP.openpilotLongitudinalControl:
+      # no output if not enabled, but keep sending keepalive messages
+      # treat pedals as one
+      final_pedal = actuators.gas - actuators.brake
 
-    if not enabled:
-      # Stock ECU sends max regen when not enabled.
-      apply_gas = P.MAX_ACC_REGEN
-      apply_brake = 0
-    else:
-      apply_gas = int(round(interp(final_pedal, P.GAS_LOOKUP_BP, P.GAS_LOOKUP_V)))
-      apply_brake = int(round(interp(final_pedal, P.BRAKE_LOOKUP_BP, P.BRAKE_LOOKUP_V)))
+      if not enabled:
+        # Stock ECU sends max regen when not enabled.
+        apply_gas = P.MAX_ACC_REGEN
+        apply_brake = 0
+      else:
+        apply_gas = int(round(interp(final_pedal, P.GAS_LOOKUP_BP, P.GAS_LOOKUP_V)))
+        apply_brake = int(round(interp(final_pedal, P.BRAKE_LOOKUP_BP, P.BRAKE_LOOKUP_V)))
 
-    # Gas/regen and brakes - all at 25Hz
-    if (frame % 4) == 0:
-      idx = (frame // 4) % 4
+      # Gas/regen and brakes - all at 25Hz
+      if (frame % 4) == 0:
+        idx = (frame // 4) % 4
 
-      at_full_stop = enabled and CS.out.standstill
-      near_stop = enabled and (CS.out.vEgo < P.NEAR_STOP_BRAKE_PHASE)
-      can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, CanBus.CHASSIS, apply_brake, idx, near_stop, at_full_stop))
-      can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, apply_gas, idx, enabled, at_full_stop))
+        at_full_stop = enabled and CS.out.standstill
+        near_stop = enabled and (CS.out.vEgo < P.NEAR_STOP_BRAKE_PHASE)
+        can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, CanBus.CHASSIS, apply_brake, idx, near_stop, at_full_stop, CS.CP.ecuInterceptorBusChas))
+        can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, apply_gas, idx, enabled, at_full_stop, CS.CP.ecuInterceptorBusPT))
 
-    # Send dashboard UI commands (ACC status), 25hz
-    if (frame % 4) == 0:
-      send_fcw = hud_alert == VisualAlert.fcw
-      can_sends.append(gmcan.create_acc_dashboard_command(self.packer_pt, CanBus.POWERTRAIN, enabled, hud_v_cruise * CV.MS_TO_KPH, hud_show_car, send_fcw))
+      # Send dashboard UI commands (ACC status), 25hz
+      if (frame % 4) == 0:
+        send_fcw = hud_alert == VisualAlert.fcw
+        can_sends.append(gmcan.create_acc_dashboard_command(self.packer_pt, CanBus.POWERTRAIN, enabled, hud_v_cruise * CV.MS_TO_KPH, hud_show_car, send_fcw, CS.CP.ecuInterceptorBusPT))
 
-    # Radar needs to know current speed and yaw rate (50hz),
-    # and that ADAS is alive (10hz)
-    time_and_headlights_step = 10
-    tt = frame * DT_CTRL
+      # Show green icon when LKA torque is applied, and
+      # alarming orange icon when approaching torque limit.
+      # If not sent again, LKA icon disappears in about 5 seconds.
+      # Conveniently, sending camera message periodically also works as a keepalive.
+      lka_active = CS.lkas_status == 1
+      lka_critical = lka_active and abs(actuators.steer) > 0.9
+      lka_icon_status = (lka_active, lka_critical)
+      if frame % P.CAMERA_KEEPALIVE_STEP == 0 or lka_icon_status != self.lka_icon_status_last:
+        steer_alert = hud_alert == VisualAlert.steerRequired
+        #can_sends.append(gmcan.create_lka_icon_command(CanBus.SW_GMLAN, lka_active, lka_critical, steer_alert))
+        self.lka_icon_status_last = lka_icon_status
 
-    if frame % time_and_headlights_step == 0:
-      idx = (frame // time_and_headlights_step) % 4
-      can_sends.append(gmcan.create_adas_time_status(CanBus.OBSTACLE, int((tt - self.start_time) * 60), idx))
-      can_sends.append(gmcan.create_adas_headlights_status(self.packer_obj, CanBus.OBSTACLE))
+    # LKA only cars or cars with ASCM Interceptors don't need to emulate these functions
+    if CS.CP.ascmDisabled:
+      # Radar needs to know current speed and yaw rate (50hz),
+      # and that ADAS is alive (10hz)
+      time_and_headlights_step = 10
+      tt = frame * DT_CTRL
 
-    speed_and_accelerometer_step = 2
-    if frame % speed_and_accelerometer_step == 0:
-      idx = (frame // speed_and_accelerometer_step) % 4
-      can_sends.append(gmcan.create_adas_steering_status(CanBus.OBSTACLE, idx))
-      can_sends.append(gmcan.create_adas_accelerometer_speed_status(CanBus.OBSTACLE, CS.out.vEgo, idx))
+      if frame % time_and_headlights_step == 0:
+        idx = (frame // time_and_headlights_step) % 4
+        can_sends.append(gmcan.create_adas_time_status(CanBus.OBSTACLE, int((tt - self.start_time) * 60), idx))
+        can_sends.append(gmcan.create_adas_headlights_status(self.packer_obj, CanBus.OBSTACLE))
 
-    if frame % P.ADAS_KEEPALIVE_STEP == 0:
-      can_sends += gmcan.create_adas_keepalive(CanBus.POWERTRAIN)
+      speed_and_accelerometer_step = 2
+      if frame % speed_and_accelerometer_step == 0:
+        idx = (frame // speed_and_accelerometer_step) % 4
+        can_sends.append(gmcan.create_adas_steering_status(CanBus.OBSTACLE, idx))
+        can_sends.append(gmcan.create_adas_accelerometer_speed_status(CanBus.OBSTACLE, CS.out.vEgo, idx))
 
-    # Show green icon when LKA torque is applied, and
-    # alarming orange icon when approaching torque limit.
-    # If not sent again, LKA icon disappears in about 5 seconds.
-    # Conveniently, sending camera message periodically also works as a keepalive.
-    lka_active = CS.lkas_status == 1
-    lka_critical = lka_active and abs(actuators.steer) > 0.9
-    lka_icon_status = (lka_active, lka_critical)
-    if frame % P.CAMERA_KEEPALIVE_STEP == 0 or lka_icon_status != self.lka_icon_status_last:
-      steer_alert = hud_alert == VisualAlert.steerRequired
-      can_sends.append(gmcan.create_lka_icon_command(CanBus.SW_GMLAN, lka_active, lka_critical, steer_alert))
-      self.lka_icon_status_last = lka_icon_status
+      if frame % P.ADAS_KEEPALIVE_STEP == 0:
+        can_sends += gmcan.create_adas_keepalive(CanBus.POWERTRAIN)
 
     return can_sends
