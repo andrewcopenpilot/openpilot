@@ -13,6 +13,10 @@ VIN_UNKNOWN = "0" * 17
 
 def vin_check_digit_validator(vin):
   cloudlog.info("Checking VIN: %s", vin)
+
+  if len(vin) != 17:
+    return False
+
   key = {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5,
          "F": 6, "G": 7, "H": 8, "J": 1, "K": 2,
          "L": 3, "M": 4, "N": 5, "P": 7, "R": 9,
@@ -28,7 +32,12 @@ def vin_check_digit_validator(vin):
 
   products = 0
   for i, char in enumerate(vin):
+    if char not in key:
+      return False
     products += key[char] * weight[i]
+
+  if vin[8] not in check_digit_key:
+    return False
 
   if (products % 11 == check_digit_key[vin[8]]):
     return True
