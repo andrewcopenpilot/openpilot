@@ -32,9 +32,10 @@ class CarInterface(CarInterfaceBase):
     # Have to go to read_only if ASCM is online (ACC-enabled cars),
     # or camera is on powertrain bus (LKA cars without ACC).
     # ECU Interceptors negate the need for read_only
-    # ECU Interceptors send their own status on 885
-    ret.ecuInterceptorBusPT = 885 in fingerprint[0]
-    ret.ecuInterceptorBusChas = 885 in fingerprint[2]
+    # ECU Interceptors send their own status on 885, 886, and 887 on the object bus
+    ret.ecuInterceptorBusPT = 885 in fingerprint[1]
+    ret.ecuInterceptorBusChas = 886 in fingerprint[1]
+    ret.swgmlanProxy = 887 in fingerprint[1]
     ret.ascmDisabled = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.fwdCamera)
     ret.enableCamera = ret.ascmDisabled or ret.ecuInterceptorBusPT
     ret.openpilotLongitudinalControl = ret.enableCamera
@@ -46,6 +47,7 @@ class CarInterface(CarInterfaceBase):
     cloudlog.warning("ASCM Disabled: %r", ret.ascmDisabled)
     cloudlog.warning("ECU Interceptor is present on the powertrain bus: %r", ret.ecuInterceptorBusPT)
     cloudlog.warning("ECU Interceptor is present on the chassis bus: %r", ret.ecuInterceptorBusChas)
+    cloudlog.warning("SW GMLAN Proxy to Object bus is present: %r", ret.swgmlanProxy)
     cloudlog.warning("ECU Camera Simulated: %r", ret.enableCamera)
     cloudlog.warning("Open Pilot Longitudinal Control: %r", ret.openpilotLongitudinalControl)
 

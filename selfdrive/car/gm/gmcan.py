@@ -10,9 +10,7 @@ def create_steering_control(packer, bus, apply_steer, idx, lkas_active, proxy):
   }
 
   if proxy:
-    msg = packer.make_can_msg("PTInterceptorASCMLKASteeringCmd", bus, values)
-    msg[3]=1 # Shift bus for interceptor
-    return msg
+    bus = 1 # If proxy is present, send on obj bus
   return packer.make_can_msg("ASCMLKASteeringCmd", bus, values)
 
 def create_adas_keepalive(bus):
@@ -37,9 +35,7 @@ def create_gas_regen_command(packer, bus, throttle, idx, acc_engaged, at_full_st
                                ((0x100 - dat[3] - idx) & 0xff)
 
   if proxy:
-    msg = packer.make_can_msg("PTInterceptorGasRegenCmd", bus, values)
-    msg[3]=1 # Shift bus for interceptor
-    return msg
+    bus = 1 # If proxy is present, send on obj bus
   return packer.make_can_msg("ASCMGasRegenCmd", bus, values)
 
 def create_friction_brake_command(packer, bus, apply_brake, idx, near_stop, at_full_stop, proxy):
@@ -67,9 +63,7 @@ def create_friction_brake_command(packer, bus, apply_brake, idx, near_stop, at_f
   }
 
   if proxy:
-    msg = packer.make_can_msg("ChasInterceptorFrictionBrakeCmd", bus, values)
-    msg[3]=1 # Shift bus for interceptor
-    return msg
+    bus = 1 # If proxy is present, send on obj bus
   return packer.make_can_msg("EBCMFrictionBrakeCmd", bus, values)
 
 def create_acc_dashboard_command(packer, bus, acc_engaged, target_speed_kph, lead_car_in_sight, fcw, proxy):
@@ -88,9 +82,7 @@ def create_acc_dashboard_command(packer, bus, acc_engaged, target_speed_kph, lea
   }
 
   if proxy:
-    msg = packer.make_can_msg("PTInterceptorActiveCruiseControlStatus", bus, values)
-    msg[3]=1 # Shift bus for interceptor
-    return msg
+    bus = 1 # If proxy is present, send on obj bus
   return packer.make_can_msg("ASCMActiveCruiseControlStatus", bus, values)
 
 def create_adas_time_status(bus, tt, idx):
@@ -127,7 +119,7 @@ def create_adas_headlights_status(packer, bus):
   }
   return packer.make_can_msg("ASCMHeadlight", bus, values)
 
-def create_lka_icon_command(bus, active, critical, steer):
+def create_lka_icon_command(bus, active, critical, steer, proxy):
   if active and steer == 1:
     if critical:
       dat = b"\x50\xc0\x14"
@@ -140,4 +132,7 @@ def create_lka_icon_command(bus, active, critical, steer):
       dat = b"\x40\x40\x18"
   else:
     dat = b"\x00\x00\x00"
+
+  if proxy:
+    bus = 1 # If proxy is present, send on obj bus
   return make_can_msg(0x104c006c, dat, bus)
