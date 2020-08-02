@@ -2052,6 +2052,8 @@ public:
 
   inline bool getEcuInterceptorBusChas() const;
 
+  inline bool getSwgmlanProxy() const;
+
   inline bool getAscmDisabled() const;
 
 private:
@@ -2288,6 +2290,9 @@ public:
 
   inline bool getEcuInterceptorBusChas();
   inline void setEcuInterceptorBusChas(bool value);
+
+  inline bool getSwgmlanProxy();
+  inline void setSwgmlanProxy(bool value);
 
   inline bool getAscmDisabled();
   inline void setAscmDisabled(bool value);
@@ -5697,18 +5702,32 @@ inline void CarParams::Builder::setEcuInterceptorBusChas(bool value) {
       ::capnp::bounded<14>() * ::capnp::ELEMENTS, value);
 }
 
-inline bool CarParams::Reader::getAscmDisabled() const {
+inline bool CarParams::Reader::getSwgmlanProxy() const {
   return _reader.getDataField<bool>(
       ::capnp::bounded<15>() * ::capnp::ELEMENTS);
 }
 
-inline bool CarParams::Builder::getAscmDisabled() {
+inline bool CarParams::Builder::getSwgmlanProxy() {
   return _builder.getDataField<bool>(
       ::capnp::bounded<15>() * ::capnp::ELEMENTS);
 }
-inline void CarParams::Builder::setAscmDisabled(bool value) {
+inline void CarParams::Builder::setSwgmlanProxy(bool value) {
   _builder.setDataField<bool>(
       ::capnp::bounded<15>() * ::capnp::ELEMENTS, value);
+}
+
+inline bool CarParams::Reader::getAscmDisabled() const {
+  return _reader.getDataField<bool>(
+      ::capnp::bounded<656>() * ::capnp::ELEMENTS);
+}
+
+inline bool CarParams::Builder::getAscmDisabled() {
+  return _builder.getDataField<bool>(
+      ::capnp::bounded<656>() * ::capnp::ELEMENTS);
+}
+inline void CarParams::Builder::setAscmDisabled(bool value) {
+  _builder.setDataField<bool>(
+      ::capnp::bounded<656>() * ::capnp::ELEMENTS, value);
 }
 
 inline bool CarParams::LateralParams::Reader::hasTorqueBP() const {
