@@ -134,6 +134,6 @@ def create_lka_icon_command(bus, active, critical, steer, proxy):
     dat = b"\x00\x00\x00"
 
   if proxy:
-    dat = bytes([dat[2], dat[1], dat[0]])
+    #dat = bytes([dat[2], dat[1], dat[0]])
     bus = 1 # If proxy is present, send on obj bus
   return make_can_msg(0x104c006c, dat, bus)
