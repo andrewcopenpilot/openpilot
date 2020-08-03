@@ -40,7 +40,7 @@ class CarInterface(CarInterfaceBase):
     #ret.swgmlanProxy = 887 in fingerprint[1]
     ret.swgmlanProxy = True
     #ret.ascmDisabled = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.fwdCamera)
-    ret.ascmDisabled = True
+    ret.ascmDisabled = False
     ret.enableCamera = ret.ascmDisabled or ret.ecuInterceptorBusPT
     ret.openpilotLongitudinalControl = ret.enableCamera
 
