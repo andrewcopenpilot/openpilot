@@ -184,7 +184,7 @@ class CarInterface(CarInterfaceBase):
       events.add(EventName.parkBrake)
     if self.CS.pcm_acc_status == AccState.FAULTED:
       events.add(EventName.controlsFailed)
-    if ret.vEgo < self.CP.minSteerSpeed:
+    if ret.vEgo < self.CP.minSteerSpeed and not ret.cruiseState.standstill:
       events.add(car.CarEvent.EventName.belowSteerSpeed)
     if ret.cruiseState.standstill:
       events.add(EventName.resumeRequired)
