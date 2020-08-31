@@ -96,10 +96,10 @@ class CarController():
         near_stop = enabled and (CS.out.vEgo < P.NEAR_STOP_BRAKE_PHASE)
         can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, CanBus.CHASSIS, apply_brake, idx, near_stop, at_full_stop, CS.CP.ecuInterceptorBusChas))
 
-        car_stopping = apply_gas < ZERO_GAS
+        car_stopping = apply_gas < 2048
         # Auto-resume from full stop by resetting ACC control
         acc_enabled = enabled
-        if standstill and not car_stopping:
+        if CS.out.standstill and not car_stopping:
           acc_enabled = False
         can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, apply_gas, idx, enabled, at_full_stop, CS.CP.ecuInterceptorBusPT))
 
