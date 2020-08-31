@@ -54,8 +54,9 @@ class CarController():
     self.packer_ch = CANPacker(DBC[CP.carFingerprint]['chassis'])
 
   def update(self, enabled, CS, frame, actuators,
-             hud_v_cruise, hud_show_lanes, hud_show_car, hud_alert):
+             hud_v_cruise, hud_show_lanes, hud_show_car, hud_alert, pcm_acc_status):
 
+    print(pcm_acc_status, file=open("/tmp/output.txt", "a"))
     P = self.params
 
     # Send CAN commands.
@@ -77,9 +78,10 @@ class CarController():
       can_sends.append(gmcan.create_steering_control(self.packer_pt, CanBus.POWERTRAIN, apply_steer, idx, lkas_enabled, CS.CP.ecuInterceptorBusPT))
 
     # GAS/BRAKE
-    if (CS.out.pcm_acc_status == 1 or CS.out.pcm_acc_status == 2) and (self.pcm_acc_status_prev == 0 or self.pcm_acc_status_prev == 4):
+    if (pcm_acc_status == 1 or pcm_acc_status == 2) and (self.pcm_acc_status_prev == 0 or self.pcm_acc_status_prev == 4):
       self.apply_gas = 1980
-    self.pcm_acc_status_prev = CS.out.pcm_acc_status
+    self.pcm_acc_status_prev = pcm_acc_status
+
     if CS.CP.openpilotLongitudinalControl:
       # no output if not enabled, but keep sending keepalive messages
       # treat pedals as one

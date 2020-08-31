@@ -217,7 +217,7 @@ class CarInterface(CarInterfaceBase):
     can_sends = self.CC.update(enabled, self.CS, self.frame,
                                c.actuators,
                                hud_v_cruise, c.hudControl.lanesVisible,
-                               c.hudControl.leadVisible, c.hudControl.visualAlert)
+                               c.hudControl.leadVisible, c.hudControl.visualAlert, self.CS.pcm_acc_status)
 
     self.frame += 1
     return can_sends
