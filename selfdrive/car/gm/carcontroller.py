@@ -56,7 +56,7 @@ class CarController():
   def update(self, enabled, CS, frame, actuators,
              hud_v_cruise, hud_show_lanes, hud_show_car, hud_alert, pcm_acc_status):
 
-    print(pcm_acc_status, file=open("/tmp/output.txt", "a"))
+    #print(pcm_acc_status, file=open("/tmp/output.txt", "a"))
     P = self.params
 
     # Send CAN commands.
@@ -79,7 +79,7 @@ class CarController():
 
     # GAS/BRAKE
     if (pcm_acc_status == 1 or pcm_acc_status == 2) and (self.pcm_acc_status_prev == 0 or self.pcm_acc_status_prev == 4):
-      self.apply_gas = 1980
+      self.apply_gas = 1554
     self.pcm_acc_status_prev = pcm_acc_status
 
     if CS.CP.openpilotLongitudinalControl:
@@ -95,7 +95,12 @@ class CarController():
         apply_gas_target = int(round(interp(final_pedal, P.GAS_LOOKUP_BP, P.GAS_LOOKUP_V)))
         if apply_gas_target < 1980:
           self.apply_gas = apply_gas_target
-        self.apply_gas = min(apply_gas_target, self.apply_gas+15)
+        else:
+          if self.apply_gas < 1980:
+            self.apply_gas = 1980
+          self.apply_gas = min(apply_gas_target, self.apply_gas+15)
+          
+
         apply_brake = int(round(interp(final_pedal, P.BRAKE_LOOKUP_BP, P.BRAKE_LOOKUP_V)))
 
       # Gas/regen and brakes - all at 25Hz
@@ -111,6 +116,8 @@ class CarController():
         acc_enabled = enabled
         if CS.out.standstill and not car_stopping:
           acc_enabled = False
+        if not acc_enabled:
+          self.apply_gas = 1554
         can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, self.apply_gas, idx, acc_enabled, at_full_stop, CS.CP.ecuInterceptorBusPT))
 
       # Send dashboard UI commands (ACC status), 25hz
