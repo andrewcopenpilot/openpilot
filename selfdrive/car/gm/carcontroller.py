@@ -44,6 +44,8 @@ class CarController():
     self.apply_steer_last = 0
     self.lka_icon_status_last = (False, False)
     self.steer_rate_limited = False
+    self.pcm_acc_status_prev = 0
+    self.apply_gas = 1980
 
     self.params = CarControllerParams()
 
@@ -75,6 +77,9 @@ class CarController():
       can_sends.append(gmcan.create_steering_control(self.packer_pt, CanBus.POWERTRAIN, apply_steer, idx, lkas_enabled, CS.CP.ecuInterceptorBusPT))
 
     # GAS/BRAKE
+    if (CS.out.pcm_acc_status == 1 or CS.out.pcm_acc_status == 2) and (self.pcm_acc_status_prev == 0 or self.pcm_acc_status_prev == 4):
+      self.apply_gas = 1980
+    self.pcm_acc_status_prev = CS.out.pcm_acc_status
     if CS.CP.openpilotLongitudinalControl:
       # no output if not enabled, but keep sending keepalive messages
       # treat pedals as one
@@ -82,10 +87,13 @@ class CarController():
 
       if not enabled:
         # Stock ECU sends max regen when not enabled.
-        apply_gas = P.MAX_ACC_REGEN
+        self.apply_gas = 1554 #P.MAX_ACC_REGEN
         apply_brake = 0
       else:
-        apply_gas = int(round(interp(final_pedal, P.GAS_LOOKUP_BP, P.GAS_LOOKUP_V)))
+        apply_gas_target = int(round(interp(final_pedal, P.GAS_LOOKUP_BP, P.GAS_LOOKUP_V)))
+        if apply_gas_target < 1980:
+          self.apply_gas = apply_gas_target
+        self.apply_gas = min(apply_gas_target, self.apply_gas+15)
         apply_brake = int(round(interp(final_pedal, P.BRAKE_LOOKUP_BP, P.BRAKE_LOOKUP_V)))
 
       # Gas/regen and brakes - all at 25Hz
@@ -96,12 +104,12 @@ class CarController():
         near_stop = enabled and (CS.out.vEgo < P.NEAR_STOP_BRAKE_PHASE)
         can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, CanBus.CHASSIS, apply_brake, idx, near_stop, at_full_stop, CS.CP.ecuInterceptorBusChas))
 
-        car_stopping = apply_gas < 2048
+        car_stopping = self.apply_gas < 2048
         # Auto-resume from full stop by resetting ACC control
         acc_enabled = enabled
         if CS.out.standstill and not car_stopping:
           acc_enabled = False
-        can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, apply_gas, idx, acc_enabled, at_full_stop, CS.CP.ecuInterceptorBusPT))
+        can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, self.apply_gas, idx, acc_enabled, at_full_stop, CS.CP.ecuInterceptorBusPT))
 
       # Send dashboard UI commands (ACC status), 25hz
       if (frame % 4) == 0:
