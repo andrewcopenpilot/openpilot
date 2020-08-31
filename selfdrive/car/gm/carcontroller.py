@@ -101,7 +101,7 @@ class CarController():
         acc_enabled = enabled
         if CS.out.standstill and not car_stopping:
           acc_enabled = False
-        can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, apply_gas, idx, enabled, at_full_stop, CS.CP.ecuInterceptorBusPT))
+        can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, apply_gas, idx, acc_enabled, at_full_stop, CS.CP.ecuInterceptorBusPT))
 
       # Send dashboard UI commands (ACC status), 25hz
       if (frame % 4) == 0:
