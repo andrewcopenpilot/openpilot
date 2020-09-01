@@ -114,8 +114,9 @@ class CarController():
         car_stopping = self.apply_gas < 2048
         # Auto-resume from full stop by resetting ACC control
         acc_enabled = enabled
-        if CS.out.standstill and not car_stopping:
+        if pcm_acc_status == 4 and apply_brake >= 0:
           acc_enabled = False
+
         if not acc_enabled:
           self.apply_gas = 1554
         can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, self.apply_gas, idx, acc_enabled, at_full_stop, CS.CP.ecuInterceptorBusPT))
