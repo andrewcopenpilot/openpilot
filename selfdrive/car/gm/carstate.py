@@ -63,8 +63,7 @@ class CarState(CarStateBase):
       ret.brakePressed = ret.brakePressed or bool(pt_cp.vl["EBCMRegenPaddle"]['RegenPaddle'])
 
     ret.cruiseState.enabled = self.pcm_acc_status != AccState.OFF
-    #ret.cruiseState.standstill = self.pcm_acc_status == AccState.STANDSTILL
-    ret.cruiseState.standstill = False
+    ret.cruiseState.standstill = self.pcm_acc_status == AccState.STANDSTILL
 
     # 0 - inactive, 1 - active, 2 - temporary limited, 3 - failed
     self.lkas_status = pt_cp.vl["PSCMStatus"]['LKATorqueDeliveredStatus']

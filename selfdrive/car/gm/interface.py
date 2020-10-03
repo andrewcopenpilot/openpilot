@@ -182,12 +182,12 @@ class CarInterface(CarInterfaceBase):
       events.add(EventName.belowEngageSpeed)
     if self.CS.park_brake:
       events.add(EventName.parkBrake)
-    if self.CS.pcm_acc_status == AccState.FAULTED:
-      events.add(EventName.controlsFailed)
-    if ret.vEgo < self.CP.minSteerSpeed and not ret.standstill:
-      events.add(car.CarEvent.EventName.belowSteerSpeed)
     if ret.cruiseState.standstill:
       events.add(EventName.resumeRequired)
+    if self.CS.pcm_acc_status == AccState.FAULTED:
+      events.add(EventName.controlsFailed)
+    if ret.vEgo < self.CP.minSteerSpeed:
+      events.add(car.CarEvent.EventName.belowSteerSpeed)
 
     # handle button presses
     for b in ret.buttonEvents:
@@ -217,7 +217,7 @@ class CarInterface(CarInterfaceBase):
     can_sends = self.CC.update(enabled, self.CS, self.frame,
                                c.actuators,
                                hud_v_cruise, c.hudControl.lanesVisible,
-                               c.hudControl.leadVisible, c.hudControl.visualAlert, self.CS.pcm_acc_status)
+                               c.hudControl.leadVisible, c.hudControl.visualAlert)
 
     self.frame += 1
     return can_sends
