@@ -3,7 +3,7 @@ import numpy as np
 
 from cereal import log
 from common.realtime import DT_CTRL
-from common.numpy_fast import clip
+from common.numpy_fast import clip, interp
 from selfdrive.car.toyota.values import SteerLimitParams
 from selfdrive.car import apply_toyota_steer_torque_limits
 from selfdrive.controls.lib.drive_helpers import get_steer_max
@@ -35,7 +35,9 @@ class LatControlINDI():
     self.enforce_rate_limit = CP.carName == "toyota"
 
     self.RC = CP.lateralTuning.indi.timeConstant
-    self.G = CP.lateralTuning.indi.actuatorEffectiveness
+    self.G = CP.lateralTuning.indi.actuatorEffectivenessV[0]
+    self.G_V = CP.lateralTuning.indi.actuatorEffectivenessV
+    self.G_BP = CP.lateralTuning.indi.actuatorEffectivenessBP
     self.outer_loop_gain = CP.lateralTuning.indi.outerLoopGain
     self.inner_loop_gain = CP.lateralTuning.indi.innerLoopGain
     self.alpha = 1. - DT_CTRL / (self.RC + DT_CTRL)
@@ -92,6 +94,7 @@ class LatControlINDI():
       accel_error = accel_sp - self.x[2]
 
       # Compute change in actuator
+      self.G = interp(CS.vEgo, self.G_BP, self.G_V)
       g_inv = 1. / self.G
       delta_u = g_inv * accel_error
 

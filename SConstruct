@@ -283,31 +283,31 @@ else:
 
 Export('common', 'visionipc', 'gpucommon')
 
-SConscript(['opendbc/can/SConscript'])
+#SConscript(['opendbc/can/SConscript'])
 
-SConscript(['common/SConscript'])
-SConscript(['common/kalman/SConscript'])
-SConscript(['common/transformations/SConscript'])
-SConscript(['phonelibs/SConscript'])
+#SConscript(['common/SConscript'])
+#SConscript(['common/kalman/SConscript'])
+#SConscript(['common/transformations/SConscript'])
+#SConscript(['phonelibs/SConscript'])
 
-SConscript(['selfdrive/camerad/SConscript'])
-SConscript(['selfdrive/modeld/SConscript'])
+#SConscript(['selfdrive/camerad/SConscript'])
+#SConscript(['selfdrive/modeld/SConscript'])
 
-SConscript(['selfdrive/controls/lib/cluster/SConscript'])
-SConscript(['selfdrive/controls/lib/lateral_mpc/SConscript'])
-SConscript(['selfdrive/controls/lib/longitudinal_mpc/SConscript'])
-SConscript(['selfdrive/controls/lib/longitudinal_mpc_model/SConscript'])
+#SConscript(['selfdrive/controls/lib/cluster/SConscript'])
+#SConscript(['selfdrive/controls/lib/lateral_mpc/SConscript'])
+#SConscript(['selfdrive/controls/lib/longitudinal_mpc/SConscript'])
+#SConscript(['selfdrive/controls/lib/longitudinal_mpc_model/SConscript'])
 
-SConscript(['selfdrive/boardd/SConscript'])
-SConscript(['selfdrive/proclogd/SConscript'])
-SConscript(['selfdrive/clocksd/SConscript'])
+#SConscript(['selfdrive/boardd/SConscript'])
+#SConscript(['selfdrive/proclogd/SConscript'])
+#SConscript(['selfdrive/clocksd/SConscript'])
 
-SConscript(['selfdrive/loggerd/SConscript'])
+#SConscript(['selfdrive/loggerd/SConscript'])
 
-SConscript(['selfdrive/locationd/SConscript'])
-SConscript(['selfdrive/locationd/models/SConscript'])
-SConscript(['selfdrive/sensord/SConscript'])
-SConscript(['selfdrive/ui/SConscript'])
+#SConscript(['selfdrive/locationd/SConscript'])
+#SConscript(['selfdrive/locationd/models/SConscript'])
+#SConscript(['selfdrive/sensord/SConscript'])
+#SConscript(['selfdrive/ui/SConscript'])
 
 if arch != "Darwin":
   SConscript(['selfdrive/logcatd/SConscript'])

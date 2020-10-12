@@ -544,7 +544,7 @@ struct CarParams::LateralINDITuning {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(a334472e045533b3, 2, 0)
+    CAPNP_DECLARE_STRUCT_HEADER(a334472e045533b3, 2, 2)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -2050,6 +2050,14 @@ public:
 
   inline  ::cereal::CarParams::NetworkLocation getNetworkLocation() const;
 
+  inline bool getEcuInterceptorBusPT() const;
+
+  inline bool getEcuInterceptorBusChas() const;
+
+  inline bool getSwgmlanProxy() const;
+
+  inline bool getAscmDisabled() const;
+
 private:
   ::capnp::_::StructReader _reader;
   template <typename, ::capnp::Kind>
@@ -2278,6 +2286,18 @@ public:
 
   inline  ::cereal::CarParams::NetworkLocation getNetworkLocation();
   inline void setNetworkLocation( ::cereal::CarParams::NetworkLocation value);
+
+  inline bool getEcuInterceptorBusPT();
+  inline void setEcuInterceptorBusPT(bool value);
+
+  inline bool getEcuInterceptorBusChas();
+  inline void setEcuInterceptorBusChas(bool value);
+
+  inline bool getSwgmlanProxy();
+  inline void setSwgmlanProxy(bool value);
+
+  inline bool getAscmDisabled();
+  inline void setAscmDisabled(bool value);
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -2683,6 +2703,12 @@ public:
 
   inline float getActuatorEffectiveness() const;
 
+  inline bool hasActuatorEffectivenessV() const;
+  inline  ::capnp::List<float>::Reader getActuatorEffectivenessV() const;
+
+  inline bool hasActuatorEffectivenessBP() const;
+  inline  ::capnp::List<float>::Reader getActuatorEffectivenessBP() const;
+
 private:
   ::capnp::_::StructReader _reader;
   template <typename, ::capnp::Kind>
@@ -2722,6 +2748,22 @@ public:
 
   inline float getActuatorEffectiveness();
   inline void setActuatorEffectiveness(float value);
+
+  inline bool hasActuatorEffectivenessV();
+  inline  ::capnp::List<float>::Builder getActuatorEffectivenessV();
+  inline void setActuatorEffectivenessV( ::capnp::List<float>::Reader value);
+  inline void setActuatorEffectivenessV(::kj::ArrayPtr<const float> value);
+  inline  ::capnp::List<float>::Builder initActuatorEffectivenessV(unsigned int size);
+  inline void adoptActuatorEffectivenessV(::capnp::Orphan< ::capnp::List<float>>&& value);
+  inline ::capnp::Orphan< ::capnp::List<float>> disownActuatorEffectivenessV();
+
+  inline bool hasActuatorEffectivenessBP();
+  inline  ::capnp::List<float>::Builder getActuatorEffectivenessBP();
+  inline void setActuatorEffectivenessBP( ::capnp::List<float>::Reader value);
+  inline void setActuatorEffectivenessBP(::kj::ArrayPtr<const float> value);
+  inline  ::capnp::List<float>::Builder initActuatorEffectivenessBP(unsigned int size);
+  inline void adoptActuatorEffectivenessBP(::capnp::Orphan< ::capnp::List<float>>&& value);
+  inline ::capnp::Orphan< ::capnp::List<float>> disownActuatorEffectivenessBP();
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -5656,6 +5698,62 @@ inline void CarParams::Builder::setNetworkLocation( ::cereal::CarParams::Network
       ::capnp::bounded<40>() * ::capnp::ELEMENTS, value);
 }
 
+inline bool CarParams::Reader::getEcuInterceptorBusPT() const {
+  return _reader.getDataField<bool>(
+      ::capnp::bounded<13>() * ::capnp::ELEMENTS);
+}
+
+inline bool CarParams::Builder::getEcuInterceptorBusPT() {
+  return _builder.getDataField<bool>(
+      ::capnp::bounded<13>() * ::capnp::ELEMENTS);
+}
+inline void CarParams::Builder::setEcuInterceptorBusPT(bool value) {
+  _builder.setDataField<bool>(
+      ::capnp::bounded<13>() * ::capnp::ELEMENTS, value);
+}
+
+inline bool CarParams::Reader::getEcuInterceptorBusChas() const {
+  return _reader.getDataField<bool>(
+      ::capnp::bounded<14>() * ::capnp::ELEMENTS);
+}
+
+inline bool CarParams::Builder::getEcuInterceptorBusChas() {
+  return _builder.getDataField<bool>(
+      ::capnp::bounded<14>() * ::capnp::ELEMENTS);
+}
+inline void CarParams::Builder::setEcuInterceptorBusChas(bool value) {
+  _builder.setDataField<bool>(
+      ::capnp::bounded<14>() * ::capnp::ELEMENTS, value);
+}
+
+inline bool CarParams::Reader::getSwgmlanProxy() const {
+  return _reader.getDataField<bool>(
+      ::capnp::bounded<15>() * ::capnp::ELEMENTS);
+}
+
+inline bool CarParams::Builder::getSwgmlanProxy() {
+  return _builder.getDataField<bool>(
+      ::capnp::bounded<15>() * ::capnp::ELEMENTS);
+}
+inline void CarParams::Builder::setSwgmlanProxy(bool value) {
+  _builder.setDataField<bool>(
+      ::capnp::bounded<15>() * ::capnp::ELEMENTS, value);
+}
+
+inline bool CarParams::Reader::getAscmDisabled() const {
+  return _reader.getDataField<bool>(
+      ::capnp::bounded<656>() * ::capnp::ELEMENTS);
+}
+
+inline bool CarParams::Builder::getAscmDisabled() {
+  return _builder.getDataField<bool>(
+      ::capnp::bounded<656>() * ::capnp::ELEMENTS);
+}
+inline void CarParams::Builder::setAscmDisabled(bool value) {
+  _builder.setDataField<bool>(
+      ::capnp::bounded<656>() * ::capnp::ELEMENTS, value);
+}
+
 inline bool CarParams::LateralParams::Reader::hasTorqueBP() const {
   return !_reader.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
@@ -6180,6 +6278,82 @@ inline float CarParams::LateralINDITuning::Builder::getActuatorEffectiveness() {
 inline void CarParams::LateralINDITuning::Builder::setActuatorEffectiveness(float value) {
   _builder.setDataField<float>(
       ::capnp::bounded<3>() * ::capnp::ELEMENTS, value);
+}
+
+inline bool CarParams::LateralINDITuning::Reader::hasActuatorEffectivenessV() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool CarParams::LateralINDITuning::Builder::hasActuatorEffectivenessV() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::List<float>::Reader CarParams::LateralINDITuning::Reader::getActuatorEffectivenessV() const {
+  return ::capnp::_::PointerHelpers< ::capnp::List<float>>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::capnp::List<float>::Builder CarParams::LateralINDITuning::Builder::getActuatorEffectivenessV() {
+  return ::capnp::_::PointerHelpers< ::capnp::List<float>>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void CarParams::LateralINDITuning::Builder::setActuatorEffectivenessV( ::capnp::List<float>::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::List<float>>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline void CarParams::LateralINDITuning::Builder::setActuatorEffectivenessV(::kj::ArrayPtr<const float> value) {
+  ::capnp::_::PointerHelpers< ::capnp::List<float>>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::List<float>::Builder CarParams::LateralINDITuning::Builder::initActuatorEffectivenessV(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::List<float>>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), size);
+}
+inline void CarParams::LateralINDITuning::Builder::adoptActuatorEffectivenessV(
+    ::capnp::Orphan< ::capnp::List<float>>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::List<float>>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::List<float>> CarParams::LateralINDITuning::Builder::disownActuatorEffectivenessV() {
+  return ::capnp::_::PointerHelpers< ::capnp::List<float>>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool CarParams::LateralINDITuning::Reader::hasActuatorEffectivenessBP() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline bool CarParams::LateralINDITuning::Builder::hasActuatorEffectivenessBP() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::List<float>::Reader CarParams::LateralINDITuning::Reader::getActuatorEffectivenessBP() const {
+  return ::capnp::_::PointerHelpers< ::capnp::List<float>>::get(_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline  ::capnp::List<float>::Builder CarParams::LateralINDITuning::Builder::getActuatorEffectivenessBP() {
+  return ::capnp::_::PointerHelpers< ::capnp::List<float>>::get(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline void CarParams::LateralINDITuning::Builder::setActuatorEffectivenessBP( ::capnp::List<float>::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::List<float>>::set(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), value);
+}
+inline void CarParams::LateralINDITuning::Builder::setActuatorEffectivenessBP(::kj::ArrayPtr<const float> value) {
+  ::capnp::_::PointerHelpers< ::capnp::List<float>>::set(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::List<float>::Builder CarParams::LateralINDITuning::Builder::initActuatorEffectivenessBP(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::List<float>>::init(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), size);
+}
+inline void CarParams::LateralINDITuning::Builder::adoptActuatorEffectivenessBP(
+    ::capnp::Orphan< ::capnp::List<float>>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::List<float>>::adopt(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::List<float>> CarParams::LateralINDITuning::Builder::disownActuatorEffectivenessBP() {
+  return ::capnp::_::PointerHelpers< ::capnp::List<float>>::disown(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
 }
 
 inline float CarParams::LateralLQRTuning::Reader::getScale() const {
