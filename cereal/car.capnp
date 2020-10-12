@@ -407,6 +407,11 @@ struct CarParams {
   communityFeature @46: Bool;  # true if a community maintained feature is detected
   fingerprintSource @49: FingerprintSource;
   networkLocation @50 :NetworkLocation;  # Where Panda/C2 is integrated into the car's CAN network
+  ecuInterceptorBusPT @51: Bool; #Safety/ACC ECU Interceptor is present on the powertrain bus
+  ecuInterceptorBusChas @52: Bool; #Safety/ACC ECU Interceptor is present on the chassis bus
+  swgmlanProxy @53: Bool; # Proxy SW GMLAN to Object bus and vice versa
+  ascmDisabled @54: Bool; # GM ASCM has been removed or unpowered
+
 
   struct LateralParams {
     torqueBP @0 :List(Int32);
