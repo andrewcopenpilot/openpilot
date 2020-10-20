@@ -82,13 +82,17 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatioRear = 0.
       ret.centerToFront = ret.wheelbase * 0.4  # wild guess
 
-      ret.lateralTuning.init('indi')
-      ret.lateralTuning.indi.innerLoopGain = 4.0
-      ret.lateralTuning.indi.outerLoopGain = 12.0
-      ret.lateralTuning.indi.timeConstant = 4.0
-      ret.lateralTuning.indi.actuatorEffectivenessV = [27.0, 1.5]
-      ret.lateralTuning.indi.actuatorEffectivenessBP = [0.0, 31.0]
-      ret.steerActuatorDelay = 0.21
+      ret.lateralTuning.pid.kiBP = ret.lateralTuning.pid.kpBP = [5., 35.]
+      ret.lateralTuning.pid.kiV = [0.03, 0.05]
+      ret.lateralTuning.pid.kpV = [0.07, 0.12]
+
+      #ret.lateralTuning.init('indi')
+      #ret.lateralTuning.indi.innerLoopGain = 4.0
+      #ret.lateralTuning.indi.outerLoopGain = 12.0
+      #ret.lateralTuning.indi.timeConstant = 4.0
+      #ret.lateralTuning.indi.actuatorEffectivenessV = [27.0, 1.5]
+      #ret.lateralTuning.indi.actuatorEffectivenessBP = [0.0, 31.0]
+      #ret.steerActuatorDelay = 0.21
 
     elif candidate == CAR.MALIBU:
       # supports stop and go, but initial engage must be above 18mph (which include conservatism)
