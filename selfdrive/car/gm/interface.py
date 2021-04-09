@@ -50,6 +50,10 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatioRear = 0.
       ret.centerToFront = ret.wheelbase * 0.4  # wild guess
 
+      ret.lateralTuning.pid.kiBP = ret.lateralTuning.pid.kpBP = [5., 35.]
+      ret.lateralTuning.pid.kiV = [0.03, 0.05]
+      ret.lateralTuning.pid.kpV = [0.07, 0.12]
+
     elif candidate == CAR.MALIBU:
       # supports stop and go, but initial engage must be above 18mph (which include conservatism)
       ret.minEnableSpeed = 18 * CV.MPH_TO_MS

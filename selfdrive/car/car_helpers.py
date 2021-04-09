@@ -170,6 +170,7 @@ def fingerprint(logcan, sendcan):
 def get_car(logcan, sendcan):
   candidate, fingerprints, vin, car_fw, source = fingerprint(logcan, sendcan)
 
+  candidate = "CHEVROLET VOLT PREMIER 2017"
   if candidate is None:
     cloudlog.warning("car doesn't match any fingerprints: %r", fingerprints)
     candidate = "mock"
