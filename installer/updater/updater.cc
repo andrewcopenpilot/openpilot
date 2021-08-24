@@ -1,42 +1,40 @@
+#include <sys/stat.h>
+#include <sys/statvfs.h>
+#include <unistd.h>
+
+#include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <cassert>
-
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/statvfs.h>
-
-#include <string>
-#include <sstream>
 #include <fstream>
+#include <iostream>
+#include <memory>
 #include <mutex>
+#include <sstream>
+#include <string>
 #include <thread>
 
 #include <curl/curl.h>
 #include <openssl/sha.h>
-
-#include <GLES3/gl3.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-
+#include <GLES3/gl3.h>
 #include "nanovg.h"
 #define NANOVG_GLES3_IMPLEMENTATION
+#include "json11.hpp"
 #include "nanovg_gl.h"
 #include "nanovg_gl_utils.h"
 
-#include "json11.hpp"
-
-#include "common/framebuffer.h"
-#include "common/touch.h"
-#include "common/utilpp.h"
+#include "selfdrive/common/framebuffer.h"
+#include "selfdrive/common/touch.h"
+#include "selfdrive/common/util.h"
 
 #define USER_AGENT "NEOSUpdater-0.2"
 
-#define MANIFEST_URL_EON_STAGING "https://github.com/commaai/eon-neos/raw/master/update.staging.json"
-#define MANIFEST_URL_EON_LOCAL "http://192.168.5.1:8000/neosupdate/update.local.json"
-#define MANIFEST_URL_EON "https://github.com/commaai/eon-neos/raw/master/update.json"
-const char *manifest_url = MANIFEST_URL_EON;
+#define MANIFEST_URL_NEOS_STAGING "https://github.com/commaai/eon-neos/raw/master/update.staging.json"
+#define MANIFEST_URL_NEOS_LOCAL "http://192.168.5.1:8000/neosupdate/update.local.json"
+#define MANIFEST_URL_NEOS "https://github.com/commaai/eon-neos/raw/master/update.json"
+const char *manifest_url = MANIFEST_URL_NEOS;
 
 #define RECOVERY_DEV "/dev/block/bootdevice/by-name/recovery"
 #define RECOVERY_COMMAND "/cache/recovery/command"
@@ -96,7 +94,7 @@ std::string download_string(CURL *curl, std::string url) {
 
   curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
-  curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
+  curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 0);
   curl_easy_setopt(curl, CURLOPT_USERAGENT, USER_AGENT);
   curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
   curl_easy_setopt(curl, CURLOPT_RESUME_FROM, 0);
@@ -149,16 +147,40 @@ static void start_settings_activity(const char* name) {
   system(launch_cmd);
 }
 
+bool is_settings_active() {
+  FILE *fp;
+  char sys_output[4096];
+
+  fp = popen("/bin/dumpsys window windows", "r");
+  if (fp == NULL) {
+    return false;
+  }
+
+  bool active = false;
+  while (fgets(sys_output, sizeof(sys_output), fp) != NULL) {
+    if (strstr(sys_output, "mCurrentFocus=null")  != NULL) {
+      break;
+    }
+
+    if (strstr(sys_output, "mCurrentFocus=Window") != NULL) {
+      active = true;
+      break;
+    }
+  }
+
+  pclose(fp);
+
+  return active;
+}
+
 struct Updater {
   bool do_exit = false;
 
   TouchState touch;
 
   int fb_w, fb_h;
-  EGLDisplay display;
-  EGLSurface surface;
 
-  FramebufferState *fb = NULL;
+  std::unique_ptr<FrameBuffer> fb;
   NVGcontext *vg = NULL;
   int font_regular;
   int font_semibold;
@@ -168,7 +190,6 @@ struct Updater {
 
   std::mutex lock;
 
-  // i hate state machines give me coroutines already
   enum UpdateState {
     CONFIRMATION,
     LOW_BATTERY,
@@ -192,14 +213,20 @@ struct Updater {
   int b_x, b_w, b_y, b_h;
   int balt_x;
 
+  // download stage writes these for the installation stage
+  int recovery_len;
+  std::string recovery_hash;
+  std::string recovery_fn;
+  std::string ota_fn;
+
   CURL *curl = NULL;
 
-  Updater() {
+  void ui_init() {
     touch_init(&touch);
 
-    fb = framebuffer_init("updater", 0x00001000, false,
-                          &display, &surface, &fb_w, &fb_h);
-    assert(fb);
+    fb = std::make_unique<FrameBuffer>("updater", 0x00001000, false, &fb_w, &fb_h);
+
+    fb->set_power(HWC_POWER_MODE_NORMAL);
 
     vg = nvgCreateGLES3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
     assert(vg);
@@ -219,8 +246,12 @@ struct Updater {
     b_y = 720;
     b_h = 220;
 
-    state = CONFIRMATION;
-
+    if (download_stage(true)) {
+      state = RUNNING;
+      update_thread_handle = std::thread(&Updater::run_stages, this);
+    } else {
+      state = CONFIRMATION;
+    }
   }
 
   int download_file_xferinfo(curl_off_t dltotal, curl_off_t dlno,
@@ -253,7 +284,7 @@ struct Updater {
 
       curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
       curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
-      curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
+      curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 0);
       curl_easy_setopt(curl, CURLOPT_USERAGENT, USER_AGENT);
       curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
       curl_easy_setopt(curl, CURLOPT_RESUME_FROM, resume_from);
@@ -321,92 +352,82 @@ struct Updater {
     state = RUNNING;
   }
 
-  std::string stage_download(std::string url, std::string hash, std::string name) {
+  std::string download(std::string url, std::string hash, std::string name, bool dry_run) {
     std::string out_fn = UPDATE_DIR "/" + util::base_name(url);
 
-    set_progress("Downloading " + name + "...");
-    bool r = download_file(url, out_fn);
-    if (!r) {
-      set_error("failed to download " + name);
-      return "";
+    std::string fn_hash = sha256_file(out_fn);
+    if (dry_run) {
+      return (hash.compare(fn_hash) != 0) ? "" : out_fn;
+    }
+
+    // start or resume downloading if hash doesn't match
+    if (hash.compare(fn_hash) != 0) {
+      set_progress("Downloading " + name + "...");
+      bool r = download_file(url, out_fn);
+      if (!r) {
+        set_error("failed to download " + name);
+        unlink(out_fn.c_str());
+        return "";
+      }
+      fn_hash = sha256_file(out_fn);
     }
 
     set_progress("Verifying " + name + "...");
-    std::string fn_hash = sha256_file(out_fn);
     printf("got %s hash: %s\n", name.c_str(), hash.c_str());
     if (fn_hash != hash) {
       set_error(name + " was corrupt");
       unlink(out_fn.c_str());
       return "";
     }
-
     return out_fn;
   }
 
-  void run_stages() {
+  bool download_stage(bool dry_run = false) {
     curl = curl_easy_init();
     assert(curl);
 
-    if (!check_battery()) {
-      set_battery_low();
-      int battery_cap = battery_capacity();
-      while(battery_cap < min_battery_cap) {
-        battery_cap = battery_capacity();
-        battery_cap_text = std::to_string(battery_cap);
-        usleep(1000000);
-      }
-      set_running();
-    }
+    // ** quick checks before download **
 
     if (!check_space()) {
-      set_error("2GB of free space required to update");
-      return;
+      if (!dry_run) set_error("2GB of free space required to update");
+      return false;
     }
 
     mkdir(UPDATE_DIR, 0777);
 
-    const int EON = (access("/EON", F_OK) != -1);
-
     set_progress("Finding latest version...");
-    std::string manifest_s;
-    if (EON) {
-      manifest_s = download_string(curl, manifest_url);
-    } else {
-      // don't update NEO
-      exit(0);
-    }
-
+    std::string manifest_s = download_string(curl, manifest_url);
     printf("manifest: %s\n", manifest_s.c_str());
 
     std::string err;
     auto manifest = json11::Json::parse(manifest_s, err);
     if (manifest.is_null() || !err.empty()) {
       set_error("failed to load update manifest");
-      return;
+      return false;
     }
 
     std::string ota_url = manifest["ota_url"].string_value();
     std::string ota_hash = manifest["ota_hash"].string_value();
 
     std::string recovery_url = manifest["recovery_url"].string_value();
-    std::string recovery_hash = manifest["recovery_hash"].string_value();
-    int recovery_len = manifest["recovery_len"].int_value();
+    recovery_hash = manifest["recovery_hash"].string_value();
+    recovery_len = manifest["recovery_len"].int_value();
 
     // std::string installer_url = manifest["installer_url"].string_value();
     // std::string installer_hash = manifest["installer_hash"].string_value();
 
     if (ota_url.empty() || ota_hash.empty()) {
       set_error("invalid update manifest");
-      return;
+      return false;
     }
 
-    // std::string installer_fn = stage_download(installer_url, installer_hash, "installer");
+    // std::string installer_fn = download(installer_url, installer_hash, "installer");
     // if (installer_fn.empty()) {
     //   //error'd
     //   return;
     // }
 
-    std::string recovery_fn;
+    // ** handle recovery download **
     if (recovery_url.empty() || recovery_hash.empty() || recovery_len == 0) {
       set_progress("Skipping recovery flash...");
     } else {
@@ -416,19 +437,31 @@ struct Updater {
       printf("existing recovery hash: %s\n", existing_recovery_hash.c_str());
 
       if (existing_recovery_hash != recovery_hash) {
-        recovery_fn = stage_download(recovery_url, recovery_hash, "recovery");
+        recovery_fn = download(recovery_url, recovery_hash, "recovery", dry_run);
         if (recovery_fn.empty()) {
           // error'd
-          return;
+          return false;
         }
       }
     }
 
-    std::string ota_fn = stage_download(ota_url, ota_hash, "update");
+    // ** handle ota download **
+    ota_fn = download(ota_url, ota_hash, "update", dry_run);
     if (ota_fn.empty()) {
       //error'd
-      return;
+      return false;
     }
+
+    // download sucessful
+    return true;
+  }
+
+  // thread that handles downloading and installing the update
+  void run_stages() {
+    printf("run_stages start\n");
+
+
+    // ** download update **
 
     if (!check_battery()) {
       set_battery_low();
@@ -436,7 +469,25 @@ struct Updater {
       while(battery_cap < min_battery_cap) {
         battery_cap = battery_capacity();
         battery_cap_text = std::to_string(battery_cap);
-        usleep(1000000);
+        util::sleep_for(1000);
+      }
+      set_running();
+    }
+
+    bool sucess = download_stage();
+    if (!sucess) {
+      return;
+    }
+
+    // ** install update **
+
+    if (!check_battery()) {
+      set_battery_low();
+      int battery_cap = battery_capacity();
+      while(battery_cap < min_battery_cap) {
+        battery_cap = battery_capacity();
+        battery_cap_text = std::to_string(battery_cap);
+        util::sleep_for(1000);
       }
       set_running();
     }
@@ -506,7 +557,7 @@ struct Updater {
     // TODO: this should be generic between android versions
     // IPowerManager.reboot(confirm=false, reason="recovery", wait=true)
     system("service call power 16 i32 0 s16 recovery i32 1");
-    while(1) pause();
+    while (true) pause();
 
     // execl("/system/bin/reboot", "recovery");
     // set_error("failed to reboot into recovery");
@@ -603,7 +654,7 @@ struct Updater {
       int powerprompt_y = 312;
       nvgFontFace(vg, "opensans_regular");
       nvgFontSize(vg, 64.0f);
-      nvgText(vg, fb_w/2, 740, "Ensure EON is connected to power.", NULL);
+      nvgText(vg, fb_w/2, 740, "Ensure your device remains connected to a power source.", NULL);
 
       NVGpaint paint = nvgBoxGradient(
           vg, progress_x + 1, progress_y + 1,
@@ -659,9 +710,7 @@ struct Updater {
   void ui_update() {
     std::lock_guard<std::mutex> guard(lock);
 
-    switch (state) {
-    case ERROR:
-    case CONFIRMATION: {
+    if (state == ERROR || state == CONFIRMATION) {
       int touch_x = -1, touch_y = -1;
       int res = touch_poll(&touch, &touch_x, &touch_y, 0);
       if (res == 1 && !is_settings_active()) {
@@ -680,13 +729,11 @@ struct Updater {
         }
       }
     }
-    default:
-      break;
-    }
   }
 
-
   void go() {
+    ui_init();
+
     while (!do_exit) {
       ui_update();
 
@@ -708,63 +755,49 @@ struct Updater {
 
       glDisable(GL_BLEND);
 
-      eglSwapBuffers(display, surface);
+      fb->swap();
 
       assert(glGetError() == GL_NO_ERROR);
 
       // no simple way to do 30fps vsync with surfaceflinger...
-      usleep(30000);
+      util::sleep_for(30);
     }
 
     if (update_thread_handle.joinable()) {
       update_thread_handle.join();
     }
 
+    // reboot
     system("service call power 16 i32 0 i32 0 i32 1");
-  }
-
-  bool is_settings_active() {
-    FILE *fp;
-    char sys_output[4096];
-
-    fp = popen("/bin/dumpsys window windows", "r");
-    if (fp == NULL) {
-      return false;
-    }
-
-    bool active = false;
-    while (fgets(sys_output, sizeof(sys_output), fp) != NULL) {
-      if (strstr(sys_output, "mCurrentFocus=null")  != NULL) {
-        break;
-      }
-
-      if (strstr(sys_output, "mCurrentFocus=Window") != NULL) {
-        active = true;
-        break;
-      }
-    }
-
-    pclose(fp);
-
-    return active;
   }
 
 };
 
 }
+
 int main(int argc, char *argv[]) {
+  bool background_cache = false;
   if (argc > 1) {
     if (strcmp(argv[1], "local") == 0) {
-      manifest_url = MANIFEST_URL_EON_LOCAL;
+      manifest_url = MANIFEST_URL_NEOS_LOCAL;
     } else if (strcmp(argv[1], "staging") == 0) {
-      manifest_url = MANIFEST_URL_EON_STAGING;
+      manifest_url = MANIFEST_URL_NEOS_STAGING;
+    } else if (strcmp(argv[1], "bgcache") == 0) {
+      manifest_url = argv[2];
+      background_cache = true;
     } else {
       manifest_url = argv[1];
     }
   }
+
   printf("updating from %s\n", manifest_url);
   Updater updater;
-  updater.go();
 
-  return 0;
+  int err = 0;
+  if (background_cache) {
+    err = !updater.download_stage();
+  } else {
+    updater.go();
+  }
+  return err;
 }

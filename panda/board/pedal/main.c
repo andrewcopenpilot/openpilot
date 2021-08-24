@@ -1,27 +1,13 @@
 // ********************* Includes *********************
+//#define PEDAL_USB
 #include "../config.h"
-#include "libc.h"
 
-#include "main_declarations.h"
-
-#include "drivers/llcan.h"
-#include "drivers/llgpio.h"
-#include "drivers/adc.h"
-
-#include "board.h"
-
-#include "drivers/clock.h"
-#include "drivers/dac.h"
-#include "drivers/timer.h"
-
-#include "gpio.h"
+#include "early_init.h"
+#include "crc.h"
 
 #define CAN CAN1
 
-//#define PEDAL_USB
-
 #ifdef PEDAL_USB
-  #include "drivers/uart.h"
   #include "drivers/usb.h"
 #else
   // no serial either
@@ -36,12 +22,12 @@
   }
 #endif
 
-#define ENTER_BOOTLOADER_MAGIC 0xdeadbeef
+#define ENTER_BOOTLOADER_MAGIC 0xdeadbeefU
 uint32_t enter_bootloader_mode;
 
 // cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
 void __initialize_hardware_early(void) {
-  early();
+  early_initialization();
 }
 
 // ********************* serial debugging *********************
@@ -71,6 +57,7 @@ void usb_cb_ep3_out(void *usbdata, int len, bool hardwired) {
   UNUSED(len);
   UNUSED(hardwired);
 }
+void usb_cb_ep3_out_complete(void) {}
 void usb_cb_enumeration_complete(void) {}
 
 int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) {
@@ -78,6 +65,11 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
   unsigned int resp_len = 0;
   uart_ring *ur = NULL;
   switch (setup->b.bRequest) {
+    // **** 0xc1: get hardware type
+    case 0xc1:
+      resp[0] = hw_type;
+      resp_len = 1;
+      break;
     // **** 0xe0: uart read
     case 0xe0:
       ur = get_ring_by_number(setup->b.wValue.w);
@@ -101,26 +93,6 @@ int usb_cb_control_msg(USB_Setup_TypeDef *setup, uint8_t *resp, bool hardwired) 
 
 #endif
 
-// ***************************** pedal can checksum *****************************
-
-uint8_t pedal_checksum(uint8_t *dat, int len) {
-  uint8_t crc = 0xFF;
-  uint8_t poly = 0xD5; // standard crc8
-  int i, j;
-  for (i = len - 1; i >= 0; i--) {
-    crc ^= dat[i];
-    for (j = 0; j < 8; j++) {
-      if ((crc & 0x80U) != 0U) {
-        crc = (uint8_t)((crc << 1) ^ poly);
-      }
-      else {
-        crc <<= 1;
-      }
-    }
-  }
-  return crc;
-}
-
 // ***************************** can port *****************************
 
 // addresses to be used on CAN
@@ -129,8 +101,7 @@ uint8_t pedal_checksum(uint8_t *dat, int len) {
 #define CAN_GAS_SIZE 6
 #define COUNTER_CYCLE 0xFU
 
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void CAN1_TX_IRQHandler(void) {
+void CAN1_TX_IRQ_Handler(void) {
   // clear interrupt
   CAN->TSR |= CAN_TSR_RQCP0;
 }
@@ -151,9 +122,9 @@ uint32_t current_index = 0;
 #define FAULT_TIMEOUT 5U
 #define FAULT_INVALID 6U
 uint8_t state = FAULT_STARTUP;
+const uint8_t crc_poly = 0xD5U;  // standard crc8
 
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void CAN1_RX0_IRQHandler(void) {
+void CAN1_RX0_IRQ_Handler(void) {
   while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {
     #ifdef DEBUG
       puts("CAN RX\n");
@@ -182,7 +153,7 @@ void CAN1_RX0_IRQHandler(void) {
       uint16_t value_1 = (dat[2] << 8) | dat[3];
       bool enable = ((dat[4] >> 7) & 1U) != 0U;
       uint8_t index = dat[4] & COUNTER_CYCLE;
-      if (pedal_checksum(dat, CAN_GAS_SIZE - 1) == dat[5]) {
+      if (crc_checksum(dat, CAN_GAS_SIZE - 1, crc_poly) == dat[5]) {
         if (((current_index + 1U) & COUNTER_CYCLE) == index) {
           #ifdef DEBUG
             puts("setting gas ");
@@ -216,8 +187,7 @@ void CAN1_RX0_IRQHandler(void) {
   }
 }
 
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void CAN1_SCE_IRQHandler(void) {
+void CAN1_SCE_IRQ_Handler(void) {
   state = FAULT_SCE;
   llcan_clear_send(CAN);
 }
@@ -228,8 +198,7 @@ unsigned int pkt_idx = 0;
 
 int led_value = 0;
 
-// cppcheck-suppress unusedFunction ; used in headers not included in cppcheck
-void TIM3_IRQHandler(void) {
+void TIM3_IRQ_Handler(void) {
   #ifdef DEBUG
     puth(TIM3->CNT);
     puts(" ");
@@ -247,7 +216,7 @@ void TIM3_IRQHandler(void) {
     dat[2] = (pdl1 >> 8) & 0xFFU;
     dat[3] = (pdl1 >> 0) & 0xFFU;
     dat[4] = ((state & 0xFU) << 4) | pkt_idx;
-    dat[5] = pedal_checksum(dat, CAN_GAS_SIZE - 1);
+    dat[5] = crc_checksum(dat, CAN_GAS_SIZE - 1, crc_poly);
     CAN->sTxMailBox[0].TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
     CAN->sTxMailBox[0].TDHR = dat[4] | (dat[5] << 8);
     CAN->sTxMailBox[0].TDTR = 6;  // len of packet is 5
@@ -296,12 +265,22 @@ void pedal(void) {
 }
 
 int main(void) {
+  // Init interrupt table
+  init_interrupts(true);
+
+  REGISTER_INTERRUPT(CAN1_TX_IRQn, CAN1_TX_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)
+  REGISTER_INTERRUPT(CAN1_RX0_IRQn, CAN1_RX0_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)
+  REGISTER_INTERRUPT(CAN1_SCE_IRQn, CAN1_SCE_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_1)
+  
+  // Should run at around 732Hz (see init below)
+  REGISTER_INTERRUPT(TIM3_IRQn, TIM3_IRQ_Handler, 1000U, FAULT_INTERRUPT_RATE_TIM3)
+
   disable_interrupts();
 
   // init devices
   clock_init();
   peripherals_init();
-  detect_configuration();
+  detect_external_debug_serial();
   detect_board_type();
 
   // init board
@@ -322,7 +301,8 @@ int main(void) {
     puts("Failed to set llcan speed");
   }
 
-  llcan_init(CAN1);
+  bool ret = llcan_init(CAN1);
+  UNUSED(ret);
 
   // 48mhz / 65536 ~= 732
   timer_init(TIM3, 15);

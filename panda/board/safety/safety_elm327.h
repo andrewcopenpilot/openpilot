@@ -12,7 +12,7 @@ static int elm327_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   //Check valid 29 bit send addresses for ISO 15765-4
   //Check valid 11 bit send addresses for ISO 15765-4
   if ((addr != 0x18DB33F1) && ((addr & 0x1FFF00FF) != 0x18DA00F1) &&
-      ((addr != 0x7DF) && ((addr & 0x7F8) != 0x7E0))) {
+      ((addr & 0x1FFFFF00) != 0x700)) {
     tx = 0;
   }
   return tx;
@@ -33,6 +33,7 @@ static int elm327_tx_lin_hook(int lin_num, uint8_t *data, int len) {
   return tx;
 }
 
+// If current_board->has_obd and safety_param == 0, bus 1 is multiplexed to the OBD-II port
 const safety_hooks elm327_hooks = {
   .init = nooutput_init,
   .rx = default_rx_hook,

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import binascii
 import csv
 import sys
 from panda import Panda
@@ -16,14 +15,14 @@ def can_logger():
 
     try:
       p = Panda("WIFI")
-    except:
+    except Exception:
       print("WiFi connection timed out. Please make sure your Panda is connected and try again.")
       sys.exit(0)
 
   try:
-    outputfile = open('output.csv', 'wb')
+    outputfile = open('output.csv', 'w')
     csvwriter = csv.writer(outputfile)
-    #Write Header
+    # Write Header
     csvwriter.writerow(['Bus', 'MessageID', 'Message', 'MessageLength'])
     print("Writing csv file output.csv. Press Ctrl-C to exit...\n")
 
@@ -34,8 +33,8 @@ def can_logger():
     while True:
       can_recv = p.can_recv()
 
-      for address, _, dat, src  in can_recv:
-        csvwriter.writerow([str(src), str(hex(address)), "0x" + binascii.hexlify(dat), len(dat)])
+      for address, _, dat, src in can_recv:
+        csvwriter.writerow([str(src), str(hex(address)), f"0x{dat.hex()}", len(dat)])
 
         if src == 0:
           bus0_msg_cnt += 1
@@ -44,10 +43,10 @@ def can_logger():
         elif src == 2:
           bus2_msg_cnt += 1
 
-        print("Message Counts... Bus 0: " + str(bus0_msg_cnt) + " Bus 1: " + str(bus1_msg_cnt) + " Bus 2: " + str(bus2_msg_cnt), end='\r')
+        print(f"Message Counts... Bus 0: {bus0_msg_cnt} Bus 1: {bus1_msg_cnt} Bus 2: {bus2_msg_cnt}", end='\r')
 
   except KeyboardInterrupt:
-    print("\nNow exiting. Final message Counts... Bus 0: " + str(bus0_msg_cnt) + " Bus 1: " + str(bus1_msg_cnt) + " Bus 2: " + str(bus2_msg_cnt))
+    print(f"\nNow exiting. Final message Counts... Bus 0: {bus0_msg_cnt} Bus 1: {bus1_msg_cnt} Bus 2: {bus2_msg_cnt}")
     outputfile.close()
 
 if __name__ == "__main__":

@@ -39,7 +39,7 @@
 #define PANDA_DLC_MASK  0x0F
 
 #define SAFETY_ALLOUTPUT 17
-#define SAFETY_NOOUTPUT 0
+#define SAFETY_SILENT 0
 
 struct panda_usb_ctx {
   struct panda_inf_priv *priv;
@@ -81,8 +81,8 @@ static const struct usb_device_id panda_usb_table[] = {
 MODULE_DEVICE_TABLE(usb, panda_usb_table);
 
 
-// panda:       CAN1 = 0   CAN2 = 1   CAN3 = 4
-const int can_numbering[] = {0,1,4};
+// panda:       CAN1 = 0   CAN2 = 1   CAN3 = 2
+const int can_numbering[] = {0,1,2};
 
 struct panda_inf_priv *
 panda_get_inf_from_bus_id(struct panda_dev_priv *priv_dev, int bus_id){
@@ -159,7 +159,7 @@ static int panda_set_output_enable(struct panda_inf_priv* priv, bool enable){
   return usb_control_msg(priv->priv_dev->udev,
 			 usb_sndctrlpipe(priv->priv_dev->udev, 0),
 			 0xDC, USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-			 enable ? SAFETY_ALLOUTPUT : SAFETY_NOOUTPUT, 0, NULL, 0, USB_CTRL_SET_TIMEOUT);
+			 enable ? SAFETY_ALLOUTPUT : SAFETY_SILENT, 0, NULL, 0, USB_CTRL_SET_TIMEOUT);
 }
 
 static void panda_usb_write_bulk_callback(struct urb *urb)

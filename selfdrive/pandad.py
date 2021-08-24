@@ -3,20 +3,23 @@
 import os
 import time
 
+from panda import BASEDIR as PANDA_BASEDIR, Panda, PandaDFU
+from common.basedir import BASEDIR
+from common.params import Params
 from selfdrive.swaglog import cloudlog
-from panda import Panda, PandaDFU, BASEDIR
+
+PANDA_FW_FN = os.path.join(PANDA_BASEDIR, "board", "obj", "panda.bin.signed")
 
 
-def get_expected_version():
-  with open(os.path.join(BASEDIR, "VERSION")) as f:
-    repo_version = f.read()
-  repo_version += "-EON" if os.path.isfile('/EON') else "-DEV"
-  return repo_version
+def get_expected_signature() -> bytes:
+  try:
+    return Panda.get_signature_from_firmware(PANDA_FW_FN)
+  except Exception:
+    cloudlog.exception("Error computing expected signature")
+    return b""
 
 
-def update_panda():
-  repo_version = get_expected_version()
-
+def update_panda() -> Panda:
   panda = None
   panda_dfu = None
 
@@ -37,31 +40,32 @@ def update_panda():
       panda_dfu = PandaDFU(panda_dfu[0])
       panda_dfu.recover()
 
-    print("waiting for board...")
     time.sleep(1)
+
+  fw_signature = get_expected_signature()
 
   try:
     serial = panda.get_serial()[0].decode("utf-8")
   except Exception:
     serial = None
-  current_version = "bootstub" if panda.bootstub else panda.get_version()
-  cloudlog.warning("Panda %s connected, version: %s, expected %s" % (serial, current_version, repo_version))
 
-  if panda.bootstub or not current_version.startswith(repo_version):
+  panda_version = "bootstub" if panda.bootstub else panda.get_version()
+  panda_signature = b"" if panda.bootstub else panda.get_signature()
+  cloudlog.warning("Panda %s connected, version: %s, signature %s, expected %s" % (
+    serial,
+    panda_version,
+    panda_signature.hex(),
+    fw_signature.hex(),
+  ))
+
+  if panda.bootstub or panda_signature != fw_signature:
     cloudlog.info("Panda firmware out of date, update required")
-
-    signed_fn = os.path.join(BASEDIR, "board", "obj", "panda.bin.signed")
-    if os.path.exists(signed_fn):
-      cloudlog.info("Flashing signed firmware")
-      panda.flash(fn=signed_fn)
-    else:
-      cloudlog.info("Building and flashing unsigned firmware")
-      panda.flash()
-
+    panda.flash()
     cloudlog.info("Done flashing")
 
   if panda.bootstub:
-    cloudlog.info("Flashed firmware not booting, flashing development bootloader")
+    bootstub_version = panda.get_version()
+    cloudlog.info(f"Flashed firmware not booting, flashing development bootloader. Bootstub version: {bootstub_version}")
     panda.recover()
     cloudlog.info("Done flashing bootloader")
 
@@ -69,17 +73,29 @@ def update_panda():
     cloudlog.info("Panda still not booting, exiting")
     raise AssertionError
 
-  version = panda.get_version()
-  if not version.startswith(repo_version):
+  panda_signature = panda.get_signature()
+  if panda_signature != fw_signature:
     cloudlog.info("Version mismatch after flashing, exiting")
     raise AssertionError
 
+  return panda
 
-def main(gctx=None):
-  update_panda()
 
-  os.chdir("boardd")
+def main() -> None:
+  panda = update_panda()
+
+  # check health for lost heartbeat
+  health = panda.health()
+  if health["heartbeat_lost"]:
+    Params().put_bool("PandaHeartbeatLost", True)
+    cloudlog.event("heartbeat lost", deviceState=health)
+
+  cloudlog.info("Resetting panda")
+  panda.reset()
+
+  os.chdir(os.path.join(BASEDIR, "selfdrive/boardd"))
   os.execvp("./boardd", ["./boardd"])
+
 
 if __name__ == "__main__":
   main()

@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+import os
 import sys
 import argparse
 import json
 from hexdump import hexdump
+import codecs
+codecs.register_error("strict", codecs.backslashreplace_errors)
 
 from cereal import log
-import selfdrive.messaging as messaging
-from selfdrive.services import service_list
+import cereal.messaging as messaging
+from cereal.services import service_list
 
 if __name__ == "__main__":
-  poller = messaging.Poller()
 
   parser = argparse.ArgumentParser(description='Sniff a communcation socket')
   parser.add_argument('--pipe', action='store_true')
@@ -22,16 +24,21 @@ if __name__ == "__main__":
   parser.add_argument("socket", type=str, nargs='*', help="socket name")
   args = parser.parse_args()
 
+  if args.addr != "127.0.0.1":
+    os.environ["ZMQ"] = "1"
+    messaging.context = messaging.Context()
+
+  poller = messaging.Poller()
 
   for m in args.socket if len(args.socket) > 0 else service_list:
-    sock = messaging.sub_sock(m, poller, addr=args.addr)
+    messaging.sub_sock(m, poller, addr=args.addr)
 
   values = None
   if args.values:
     values = [s.strip().split(".") for s in args.values.split(",")]
 
   while 1:
-    polld = poller.poll(1000)
+    polld = poller.poll(100)
     for sock in polld:
       msg = sock.receive()
       evt = log.Event.from_bytes(msg)
@@ -56,4 +63,11 @@ if __name__ == "__main__":
               print("{} = {}".format(".".join(value), item))
           print("")
         else:
-          print(evt)
+          try:
+            print(evt)
+          except UnicodeDecodeError:
+            w = evt.which()
+            s = f"( logMonoTime {evt.logMonoTime} \n  {w} = "
+            s += str(evt.__getattr__(w))
+            s += f"\n  valid = {evt.valid} )"
+            print(s)

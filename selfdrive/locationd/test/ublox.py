@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# pylint: skip-file
 '''
 UBlox binary protocol handling
 
@@ -12,7 +13,7 @@ for ublox version 8, not all functions may work.
 
 
 import struct
-import time, os
+import time
 
 # protocol constants
 PREAMBLE1 = 0xb5
@@ -95,6 +96,7 @@ MSG_CFG_NMEA = 0x17
 MSG_CFG_NVS = 0x22
 MSG_CFG_PM2 = 0x3B
 MSG_CFG_PM = 0x32
+MSG_CFG_ITMF = 0x39
 MSG_CFG_RINV = 0x34
 MSG_CFG_RST = 0x04
 MSG_CFG_RXM = 0x11
@@ -291,7 +293,7 @@ class UBloxDescriptor:
     fields = self.fields[:]
     for f in fields:
       (fieldname, alen) = ArrayParse(f)
-      if not fieldname in msg._fields:
+      if fieldname not in msg._fields:
         break
       if alen == -1:
         f1.append(msg._fields[fieldname])
@@ -327,7 +329,7 @@ class UBloxDescriptor:
     ret = self.name + ': '
     for f in self.fields:
       (fieldname, alen) = ArrayParse(f)
-      if not fieldname in msg._fields:
+      if fieldname not in msg._fields:
         continue
       v = msg._fields[fieldname]
       if isinstance(v, list):
@@ -363,6 +365,10 @@ msg_types = {
   UBloxDescriptor('CFG_PRT', '<BBHIIHHHH', [
     'portID', 'reserved0', 'txReady', 'mode', 'baudRate', 'inProtoMask', 'outProtoMask',
     'reserved4', 'reserved5'
+  ]),
+  (CLASS_CFG, MSG_CFG_ITMF):
+  UBloxDescriptor('CFG_ITMF', '<II', [
+    'config', 'config2'
   ]),
   (CLASS_CFG, MSG_CFG_CFG):
   UBloxDescriptor('CFG_CFG', '<III,B',
@@ -475,6 +481,8 @@ msg_types = {
   UBloxDescriptor('AID_ALM', '<II', '_remaining', 'I', ['dwrd']),
   (CLASS_RXM, MSG_RXM_ALM):
   UBloxDescriptor('RXM_ALM', '<II , 8I', ['svid', 'week', 'dwrd[8]']),
+  (CLASS_CFG, MSG_CFG_ANT):
+  UBloxDescriptor('CFG_ANT', '<HH', ['flags', 'pins']),
   (CLASS_CFG, MSG_CFG_ODO):
   UBloxDescriptor('CFG_ODO', '<B3BBB6BBB2BBB2B', [
     'version', 'reserved1[3]', 'flags', 'odoCfg', 'reserverd2[6]', 'cogMaxSpeed',
@@ -494,9 +502,9 @@ msg_types = {
     'reserved12', 'reserved13', 'aopOrbMaxErr', 'reserved3', 'reserved4'
   ]),
   (CLASS_MON, MSG_MON_HW):
-  UBloxDescriptor('MON_HW', '<IIIIHHBBBBIB25BHIII', [
+  UBloxDescriptor('MON_HW', '<IIIIHHBBBBIB17BHIII', [
     'pinSel', 'pinBank', 'pinDir', 'pinVal', 'noisePerMS', 'agcCnt', 'aStatus', 'aPower',
-    'flags', 'reserved1', 'usedMask', 'VP[25]', 'jamInd', 'reserved3', 'pinInq', 'pullH',
+    'flags', 'reserved1', 'usedMask', 'VP[17]', 'jamInd', 'reserved3', 'pinInq', 'pullH',
     'pullL'
   ]),
   (CLASS_MON, MSG_MON_HW2):
@@ -589,7 +597,7 @@ class UBloxMessage:
     if not self.valid():
       raise UBloxError('INVALID MESSAGE')
     type = self.msg_type()
-    if not type in msg_types:
+    if type not in msg_types:
       raise UBloxError('Unknown message %s length=%u' % (str(type), len(self._buf)))
     msg_types[type].unpack(self)
     return self._fields, self._recs
@@ -599,7 +607,7 @@ class UBloxMessage:
     if not self.valid():
       raise UBloxError('INVALID MESSAGE')
     type = self.msg_type()
-    if not type in msg_types:
+    if type not in msg_types:
       raise UBloxError('Unknown message %s' % str(type))
     msg_types[type].pack(self)
 
@@ -608,7 +616,7 @@ class UBloxMessage:
     if not self.valid():
       raise UBloxError('INVALID MESSAGE')
     type = self.msg_type()
-    if not type in msg_types:
+    if type not in msg_types:
       raise UBloxError('Unknown message %s length=%u' % (str(type), len(self._buf)))
     return msg_types[type].name
 
@@ -685,82 +693,13 @@ class UBloxMessage:
 
 
 class UBlox:
-  '''main UBlox control class.
-
-    port can be a file (for reading only) or a serial device
-    '''
-
-  def __init__(self, port, baudrate=115200, timeout=0, panda=False, grey=False):
-
-    self.serial_device = port
+  def __init__(self, dev, baudrate):
+    self.dev = dev
     self.baudrate = baudrate
+
     self.use_sendrecv = False
     self.read_only = False
     self.debug_level = 0
-
-    if panda:
-      from panda import Panda, PandaSerial
-
-      self.panda = Panda()
-
-      # resetting U-Blox module
-      self.panda.set_esp_power(0)
-      time.sleep(0.1)
-      self.panda.set_esp_power(1)
-      time.sleep(0.5)
-
-      # can't set above 9600 now...
-      self.baudrate = 9600
-      self.dev = PandaSerial(self.panda, 1, self.baudrate)
-
-      self.baudrate = 460800
-      print("upping baud:",self.baudrate)
-      self.send_nmea("$PUBX,41,1,0007,0003,%u,0" % self.baudrate)
-      time.sleep(0.1)
-
-      self.dev = PandaSerial(self.panda, 1, self.baudrate)
-    elif grey:
-      import selfdrive.messaging as messaging
-
-      class BoarddSerial():
-        def __init__(self):
-          self.ubloxRaw = messaging.sub_sock('ubloxRaw')
-          self.buf = ""
-
-        def read(self, n):
-          for msg in messaging.drain_sock(self.ubloxRaw, len(self.buf) < n):
-            self.buf += msg.ubloxRaw
-          ret = self.buf[:n]
-          self.buf = self.buf[n:]
-          return ret
-
-
-        def write(self, dat):
-          pass
-
-      self.dev = BoarddSerial()
-    else:
-      if self.serial_device.startswith("tcp:"):
-        import socket
-        a = self.serial_device.split(':')
-        destination_addr = (a[1], int(a[2]))
-        self.dev = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.dev.connect(destination_addr)
-        self.dev.setblocking(1)
-        self.dev.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
-        self.use_sendrecv = True
-      elif os.path.isfile(self.serial_device):
-        self.read_only = True
-        self.dev = open(self.serial_device, mode='rb')
-      else:
-        import serial
-        self.dev = serial.Serial(
-          self.serial_device,
-          baudrate=self.baudrate,
-          dsrdtr=False,
-          rtscts=False,
-          xonxoff=False,
-          timeout=timeout)
 
     self.logfile = None
     self.log = None
@@ -827,7 +766,10 @@ class UBlox:
     if not self.read_only:
       if self.use_sendrecv:
         return self.dev.send(buf)
-      return self.dev.write(buf)
+      if type(buf) == str:
+        return self.dev.write(str.encode(buf))
+      else:
+        return self.dev.write(buf)
 
   def read(self, n):
     '''read some bytes'''
@@ -973,7 +915,7 @@ class UBlox:
     payload = struct.pack('<IIIB', clearMask, saveMask, loadMask, deviceMask)
     self.send_message(CLASS_CFG, MSG_CFG_CFG, payload)
 
-  def configure_poll(self, msg_class, msg_id, payload=''):
+  def configure_poll(self, msg_class, msg_id, payload=b''):
     '''poll a configuration message'''
     self.send_message(msg_class, msg_id, payload)
 
