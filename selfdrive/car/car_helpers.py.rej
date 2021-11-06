@@ -1,0 +1,9 @@
+diff a/selfdrive/car/car_helpers.py b/selfdrive/car/car_helpers.py	(rejected hunks)
+@@ -176,6 +176,7 @@ def fingerprint(logcan, sendcan):
+ def get_car(logcan, sendcan):
+   candidate, fingerprints, vin, car_fw, source, exact_match = fingerprint(logcan, sendcan)
+ 
++  candidate = "CHEVROLET VOLT PREMIER 2017"
+   if candidate is None:
+     cloudlog.warning("car doesn't match any fingerprints: %r", fingerprints)
+     candidate = "mock"

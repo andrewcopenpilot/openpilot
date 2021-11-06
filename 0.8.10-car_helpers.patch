@@ -1,0 +1,12 @@
+diff --git a/selfdrive/car/car_helpers.py b/selfdrive/car/car_helpers.py
+index f2e1b37e..604fd0b3 100644
+--- a/selfdrive/car/car_helpers.py
++++ b/selfdrive/car/car_helpers.py
+@@ -176,6 +176,7 @@ def fingerprint(logcan, sendcan):
+ def get_car(logcan, sendcan):
+   candidate, fingerprints, vin, car_fw, source, exact_match = fingerprint(logcan, sendcan)
+ 
++  candidate = "CHEVROLET VOLT PREMIER 2017"
+   if candidate is None:
+     cloudlog.warning("car doesn't match any fingerprints: %r", fingerprints)
+     candidate = "mock"
