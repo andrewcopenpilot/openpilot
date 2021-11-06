@@ -1,8 +1,18 @@
 diff --git a/selfdrive/car/car_helpers.py b/selfdrive/car/car_helpers.py
-index f2e1b37e..604fd0b3 100644
+index f2e1b37e..dab32d95 100644
 --- a/selfdrive/car/car_helpers.py
 +++ b/selfdrive/car/car_helpers.py
-@@ -176,6 +176,7 @@ def fingerprint(logcan, sendcan):
+@@ -14,7 +14,8 @@ EventName = car.CarEvent.EventName
+ 
+ 
+ def get_startup_event(car_recognized, controller_available, fw_seen):
+-  if comma_remote and tested_branch:
++  #if comma_remote and tested_branch:
++  if True:
+     event = EventName.startup
+   else:
+     event = EventName.startupMaster
+@@ -176,6 +177,7 @@ def fingerprint(logcan, sendcan):
  def get_car(logcan, sendcan):
    candidate, fingerprints, vin, car_fw, source, exact_match = fingerprint(logcan, sendcan)
  
