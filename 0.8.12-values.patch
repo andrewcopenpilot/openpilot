@@ -1,0 +1,13 @@
+diff --git a/selfdrive/car/gm/values.py b/selfdrive/car/gm/values.py
+index d475b4bd..ed2e1adc 100644
+--- a/selfdrive/car/gm/values.py
++++ b/selfdrive/car/gm/values.py
+@@ -68,7 +68,7 @@ class CanBus:
+   OBSTACLE = 1
+   CHASSIS = 2
+   SW_GMLAN = 3
+-  LOOPBACK = 128
++  LOOPBACK = 129
+ 
+ FINGERPRINTS = {
+   # Astra BK MY17, ASCM unplugged

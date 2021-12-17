@@ -14,7 +14,8 @@ EventName = car.CarEvent.EventName
 
 
 def get_startup_event(car_recognized, controller_available, fw_seen):
-  if get_comma_remote() and get_tested_branch():
+  #if get_comma_remote() and get_tested_branch():
+  if True:
     event = EventName.startup
   else:
     event = EventName.startupMaster
@@ -169,6 +170,7 @@ def fingerprint(logcan, sendcan):
 def get_car(logcan, sendcan):
   candidate, fingerprints, vin, car_fw, source, exact_match = fingerprint(logcan, sendcan)
 
+  candidate = "CHEVROLET VOLT PREMIER 2017"
   if candidate is None:
     cloudlog.warning("car doesn't match any fingerprints: %r", fingerprints)
     candidate = "mock"
