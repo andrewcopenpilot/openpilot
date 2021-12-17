@@ -75,6 +75,10 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kf = 1. # get_steer_feedforward_volt()
       ret.steerActuatorDelay = 0.2
 
+      # Only tuned to reduce oscillations. TODO.
+      ret.longitudinalTuning.kpV = [1.7, 1.3]
+      ret.longitudinalTuning.kiV = [0.36]
+
     elif candidate == CAR.MALIBU:
       # supports stop and go, but initial engage must be above 18mph (which include conservatism)
       ret.minEnableSpeed = 18 * CV.MPH_TO_MS
