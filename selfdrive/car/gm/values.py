@@ -66,7 +66,7 @@ class CanBus:
   OBSTACLE = 1
   CHASSIS = 2
   SW_GMLAN = 3
-  LOOPBACK = 128
+  LOOPBACK = 129
 
 FINGERPRINTS = {
   # Astra BK MY17, ASCM unplugged
