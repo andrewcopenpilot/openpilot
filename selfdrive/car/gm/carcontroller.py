@@ -81,7 +81,7 @@ class CarController:
     # Send dashboard UI commands (ACC status), 25hz
     if (self.frame % 4) == 0:
       send_fcw = hud_alert == VisualAlert.fcw
-      can_sends.append(gmcan.create_acc_dashboard_command(self.packer_pt, CanBus.POWERTRAIN, CC.enabled,
+      can_sends.append(gmcan.create_acc_dashboard_command(self.packer_pt, CanBus.OBSTACLE, CC.enabled,
                                                           hud_v_cruise * CV.MS_TO_KPH, hud_control.leadVisible, send_fcw))
 
     # Show green icon when LKA torque is applied, and
