@@ -1,0 +1,22 @@
+diff --git a/selfdrive/car/car_helpers.py b/selfdrive/car/car_helpers.py
+index 61e7a3d55..352389d72 100644
+--- a/selfdrive/car/car_helpers.py
++++ b/selfdrive/car/car_helpers.py
+@@ -17,7 +17,8 @@ EventName = car.CarEvent.EventName
+ 
+ 
+ def get_startup_event(car_recognized, controller_available, fw_seen):
+-  if is_comma_remote() and is_tested_branch():
++  #if is_comma_remote() and is_tested_branch():
++  if True:
+     event = EventName.startup
+   else:
+     event = EventName.startupMaster
+@@ -176,6 +177,7 @@ def fingerprint(logcan, sendcan, num_pandas):
+ def get_car(logcan, sendcan, num_pandas=1):
+   candidate, fingerprints, vin, car_fw, source, exact_match = fingerprint(logcan, sendcan, num_pandas)
+ 
++  candidate = "CHEVROLET VOLT PREMIER 2017"
+   if candidate is None:
+     cloudlog.warning("car doesn't match any fingerprints: %r", fingerprints)
+     candidate = "mock"
