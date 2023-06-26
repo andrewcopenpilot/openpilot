@@ -1,0 +1,12 @@
+diff --git a/selfdrive/car/gm/interface.py b/selfdrive/car/gm/interface.py
+index ff578da98..f0f5b3d36 100755
+--- a/selfdrive/car/gm/interface.py
++++ b/selfdrive/car/gm/interface.py
+@@ -137,6 +137,7 @@ class CarInterface(CarInterfaceBase):
+     ret.longitudinalActuatorDelayUpperBound = 0.5  # large delay to initially start braking
+ 
+     if candidate == CAR.VOLT:
++      ret.minEnableSpeed = 3 * CV.MPH_TO_MS
+       ret.mass = 1607. + STD_CARGO_KG
+       ret.wheelbase = 2.69
+       ret.steerRatio = 17.7  # Stock 15.7, LiveParameters

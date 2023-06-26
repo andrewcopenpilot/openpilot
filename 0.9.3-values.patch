@@ -1,0 +1,13 @@
+diff --git a/selfdrive/car/gm/values.py b/selfdrive/car/gm/values.py
+index b21c303d8..46111d104 100644
+--- a/selfdrive/car/gm/values.py
++++ b/selfdrive/car/gm/values.py
+@@ -138,7 +138,7 @@ class CanBus:
+   CAMERA = 2
+   CHASSIS = 2
+   SW_GMLAN = 3
+-  LOOPBACK = 128
++  LOOPBACK = 129
+   DROPPED = 192
+ 
+ FINGERPRINTS = {
