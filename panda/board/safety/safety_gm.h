@@ -28,7 +28,7 @@ const LongitudinalLimits *gm_long_limits;
 const int GM_STANDSTILL_THRSLD = 10;  // 0.311kph
 
 const CanMsg GM_ASCM_TX_MSGS[] = {{384, 0, 4}, {1033, 0, 7}, {1034, 0, 7}, {715, 0, 8}, {880, 0, 6},  // pt bus
-                                  {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2},   // obs bus
+                                  {161, 1, 7}, {774, 1, 8}, {776, 1, 7}, {784, 1, 2}, {384, 1, 4}, {715, 1, 8}, {880, 1, 6}, {789, 1, 5}, {0x104c006c, 1, 3},  // obs bus
                                   {789, 2, 5},  // ch bus
                                   {0x104c006c, 3, 3}, {0x10400060, 3, 5}};  // gmlan
 
@@ -65,10 +65,20 @@ enum {
 enum {GM_ASCM, GM_CAM} gm_hw = GM_ASCM;
 bool gm_cam_long = false;
 bool gm_pcm_cruise = false;
+bool pt_ecu_interceptor = false;
 
 static int gm_rx_hook(CANPacket_t *to_push) {
 
   bool valid = addr_safety_check(to_push, &gm_rx_checks, NULL, NULL, NULL, NULL);
+
+  if (valid && (GET_BUS(to_push) == 1U)) {
+    int addr = GET_ADDR(to_push);
+    // Check for ASCM ECU Interceptor Status
+    // TODO: Add second check for chas bus interceptor. If only PT bus has an interceptor, we should only allow steering commands
+    if (addr == 885) {
+      pt_ecu_interceptor = true;
+    }
+  }
 
   if (valid && (GET_BUS(to_push) == 0U)) {
     int addr = GET_ADDR(to_push);
@@ -136,7 +146,7 @@ static int gm_rx_hook(CANPacket_t *to_push) {
     if (!gm_pcm_cruise && (addr == 715)) {
       stock_ecu_detected = true;
     }
-    generic_rx_checks(stock_ecu_detected);
+    generic_rx_checks(stock_ecu_detected && !pt_ecu_interceptor);
   }
   return valid;
 }
