@@ -1,6 +1,5 @@
 from cereal import car
 from common.conversions import Conversions as CV
-from common.numpy_fast import interp
 from common.realtime import DT_CTRL
 from opendbc.can.packer import CANPacker
 from selfdrive.car import apply_driver_steer_torque_limits
@@ -90,8 +89,7 @@ class CarController:
           self.apply_gas = self.params.INACTIVE_REGEN
           self.apply_brake = 0
         else:
-          self.apply_gas = int(round(interp(actuators.accel, self.params.GAS_LOOKUP_BP, self.params.GAS_LOOKUP_V)))
-          self.apply_brake = int(round(interp(actuators.accel, self.params.BRAKE_LOOKUP_BP, self.params.BRAKE_LOOKUP_V)))
+          self.apply_gas, self.apply_brake = self.params.compute_gas_brake(actuators.accel, CS.out.vEgo)
 
         idx = (self.frame // 4) % 4
 
