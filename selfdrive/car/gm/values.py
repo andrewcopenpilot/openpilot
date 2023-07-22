@@ -56,8 +56,8 @@ class CarControllerParams:
 
     # The max amount of deceleration possible using ASCMGasRegenCmd alone.
     # It is assumed no regen/engine braking is available at low speeds
-    self.MAX_REGEN_ACCEL_BP = [2., 10.]  # m/s
-    self.MAX_REGEN_ACCEL_V = [0., max_regen_acceleration]  # m/s^2
+    self.MAX_REGEN_ACCEL_BP = [2., 5., 20.] # m/s
+    self.MAX_REGEN_ACCEL_V = [0., -0.75, -1.1]  # m/s^2
 
     self.GAS_LOOKUP_V = [self.MAX_ACC_REGEN, self.ZERO_GAS, self.MAX_GAS]
 
