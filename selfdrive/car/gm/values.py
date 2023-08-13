@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Dict, List, Union
 
 from cereal import car
+from common.numpy_fast import interp
 from selfdrive.car import dbc_dict
 from selfdrive.car.docs_definitions import CarFootnote, CarHarness, CarInfo, CarParts, Column
 Ecu = car.CarParams.Ecu
@@ -54,11 +55,26 @@ class CarControllerParams:
       # lower threshold removes some braking deadzone
       max_regen_acceleration = -1. if CP.carFingerprint in EV_CAR else -0.1
 
-    self.GAS_LOOKUP_BP = [max_regen_acceleration, 0., self.ACCEL_MAX]
+    # The max amount of deceleration possible using ASCMGasRegenCmd alone.
+    # It is assumed no regen/engine braking is available at low speeds
+    self.MAX_REGEN_ACCEL_BP = [2., 5., 20.] # m/s
+    self.MAX_REGEN_ACCEL_V = [0., -0.75, -1.1]  # m/s^2
+
     self.GAS_LOOKUP_V = [self.MAX_ACC_REGEN, self.ZERO_GAS, self.MAX_GAS]
 
-    self.BRAKE_LOOKUP_BP = [self.ACCEL_MIN, max_regen_acceleration]
     self.BRAKE_LOOKUP_V = [self.MAX_BRAKE, 0.]
+
+  def compute_gas_brake(self, desired_accel, v_ego):
+      # The regen/engine braking force changes with speed, this ensures we brake earlier at lower
+      # speed where we lose this force + ensures we don't apply any gas while stopping
+      max_regen_acceleration = interp(v_ego, self.MAX_REGEN_ACCEL_BP, self.MAX_REGEN_ACCEL_V)
+      gas_lookup_bp = [max_regen_acceleration, 0., self.ACCEL_MAX]
+      brake_lookup_bp = [self.ACCEL_MIN, max_regen_acceleration]
+
+      # Compute gas and brake with dynamic breakpoints
+      apply_gas = int(round(interp(desired_accel, gas_lookup_bp, self.GAS_LOOKUP_V)))
+      apply_brake = int(round(interp(desired_accel, brake_lookup_bp, self.BRAKE_LOOKUP_V)))
+      return apply_gas, apply_brake
 
 
 class CAR:
@@ -139,7 +155,7 @@ class CanBus:
   CAMERA = 2
   CHASSIS = 2
   SW_GMLAN = 3
-  LOOPBACK = 128
+  LOOPBACK = 129
   DROPPED = 192
 
 FINGERPRINTS = {
