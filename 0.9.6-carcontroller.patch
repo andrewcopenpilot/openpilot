@@ -1,5 +1,5 @@
 diff --git a/selfdrive/car/gm/carcontroller.py b/selfdrive/car/gm/carcontroller.py
-index 6c7e8007f..449d7177b 100644
+index 6c7e8007f..aae85e7e4 100644
 --- a/selfdrive/car/gm/carcontroller.py
 +++ b/selfdrive/car/gm/carcontroller.py
 @@ -1,6 +1,5 @@
@@ -28,6 +28,15 @@ index 6c7e8007f..449d7177b 100644
            # Don't allow any gas above inactive regen while stopping
            # FIXME: brakes aren't applied immediately when enabling at a stop
            if stopping:
+@@ -102,7 +100,7 @@ class CarController:
+ 
+         at_full_stop = CC.longActive and CS.out.standstill
+         near_stop = CC.longActive and (CS.out.vEgo < self.params.NEAR_STOP_BRAKE_PHASE)
+-        friction_brake_bus = CanBus.CHASSIS
++        friction_brake_bus = CanBus.OBSTACLE
+         # GM Camera exceptions
+         # TODO: can we always check the longControlState?
+         if self.CP.networkLocation == NetworkLocation.fwdCamera:
 @@ -110,18 +108,18 @@ class CarController:
            friction_brake_bus = CanBus.POWERTRAIN
  
