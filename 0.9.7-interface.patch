@@ -1,0 +1,13 @@
+diff --git a/selfdrive/car/gm/interface.py b/selfdrive/car/gm/interface.py
+index 358bc9e5b..30343a9f5 100755
+--- a/selfdrive/car/gm/interface.py
++++ b/selfdrive/car/gm/interface.py
+@@ -151,6 +151,8 @@ class CarInterface(CarInterfaceBase):
+     ret.longitudinalActuatorDelayUpperBound = 0.5  # large delay to initially start braking
+ 
+     if candidate == CAR.CHEVROLET_VOLT:
++      ret.minEnableSpeed = 3 * CV.MPH_TO_MS
++
+       ret.lateralTuning.pid.kpBP = [0., 40.]
+       ret.lateralTuning.pid.kpV = [0., 0.17]
+       ret.lateralTuning.pid.kiBP = [0.]
