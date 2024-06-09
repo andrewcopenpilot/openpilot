@@ -1,5 +1,5 @@
 diff --git a/selfdrive/car/car_helpers.py b/selfdrive/car/car_helpers.py
-index 66097339b..b62235a2d 100644
+index 66097339b..e377af6e0 100644
 --- a/selfdrive/car/car_helpers.py
 +++ b/selfdrive/car/car_helpers.py
 @@ -21,7 +21,7 @@ EventName = car.CarEvent.EventName
@@ -15,7 +15,7 @@ index 66097339b..b62235a2d 100644
  def get_car(logcan, sendcan, experimental_long_allowed, num_pandas=1):
    candidate, fingerprints, vin, car_fw, source, exact_match = fingerprint(logcan, sendcan, num_pandas)
  
-+  candidate = "CHEVROLET VOLT PREMIER 2017"
++  candidate = "CHEVROLET_VOLT"
    if candidate is None:
      cloudlog.event("car doesn't match any fingerprints", fingerprints=repr(fingerprints), error=True)
      candidate = "MOCK"
