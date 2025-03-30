@@ -207,7 +207,7 @@ class CanBus:
   OBSTACLE = 1
   CAMERA = 2
   CHASSIS = 2
-  LOOPBACK = 128
+  LOOPBACK = 129
   DROPPED = 192
 
 
