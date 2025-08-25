@@ -82,7 +82,7 @@ function launch {
   if [ ! -f $DIR/prebuilt ]; then
     ./build.py
   fi
-  LOG_FILE="/data/tmux-logs-$(date -u +'%Y-%m-%d--%H-%M-%S').log"
+  LOG_FILE="/data/tmux-logs/log-$(date -u +'%Y-%m-%d--%H-%M-%S').log"
   ./manager.py > "$LOG_FILE" 2>&1
 
   # if broken, keep on screen error
