@@ -1,0 +1,12 @@
+diff --git a/opendbc_repo/opendbc/car/car_helpers.py b/opendbc_repo/opendbc/car/car_helpers.py
+index dfda01552..47b19f032 100644
+--- a/opendbc_repo/opendbc/car/car_helpers.py
++++ b/opendbc_repo/opendbc/car/car_helpers.py
+@@ -152,6 +152,7 @@ def get_car(can_recv: CanRecvCallable, can_send: CanSendCallable, set_obd_multip
+             is_release: bool, num_pandas: int = 1, cached_params: CarParamsT | None = None):
+   candidate, fingerprints, vin, car_fw, source, exact_match = fingerprint(can_recv, can_send, set_obd_multiplexing, num_pandas, cached_params)
+ 
++  candidate = "CHEVROLET_VOLT"
+   if candidate is None:
+     carlog.error({"event": "car doesn't match any fingerprints", "fingerprints": repr(fingerprints)})
+     candidate = "MOCK"
