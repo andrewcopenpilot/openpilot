@@ -16,7 +16,7 @@ from openpilot.system.sensord.sensors.i2c_sensor import Sensor
 from openpilot.system.sensord.sensors.lsm6ds3_accel import LSM6DS3_Accel
 from openpilot.system.sensord.sensors.lsm6ds3_gyro import LSM6DS3_Gyro
 from openpilot.system.sensord.sensors.lsm6ds3_temp import LSM6DS3_Temp
-from openpilot.system.sensord.sensors.mmc5603nj_magn import MMC5603NJ_Magn
+#from openpilot.system.sensord.sensors.mmc5603nj_magn import MMC5603NJ_Magn
 
 I2C_BUS_IMU = 1
 
@@ -95,7 +95,7 @@ def main() -> None:
     (LSM6DS3_Accel(I2C_BUS_IMU), "accelerometer", True),
     (LSM6DS3_Gyro(I2C_BUS_IMU), "gyroscope", True),
     (LSM6DS3_Temp(I2C_BUS_IMU), "temperatureSensor", False),
-    (MMC5603NJ_Magn(I2C_BUS_IMU), "magnetometer", False),
+    #(MMC5603NJ_Magn(I2C_BUS_IMU), "magnetometer", False),
   ]
 
   # Reset sensors
