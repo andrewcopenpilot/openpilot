@@ -1,0 +1,13 @@
+diff --git a/opendbc_repo/opendbc/car/gm/values.py b/opendbc_repo/opendbc/car/gm/values.py
+index 1379353..658da69 100644
+--- a/opendbc_repo/opendbc/car/gm/values.py
++++ b/opendbc_repo/opendbc/car/gm/values.py
+@@ -216,7 +216,7 @@ class CanBus:
+   OBSTACLE = 1
+   CAMERA = 2
+   CHASSIS = 2
+-  LOOPBACK = 128
++  LOOPBACK = 129
+   DROPPED = 192
+ 
+ 

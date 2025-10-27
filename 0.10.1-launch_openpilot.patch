@@ -1,0 +1,11 @@
+diff --git a/launch_openpilot.sh b/launch_openpilot.sh
+index d6e3424..41294ef 100755
+--- a/launch_openpilot.sh
++++ b/launch_openpilot.sh
+@@ -1,3 +1,6 @@
+ #!/usr/bin/env bash
+ 
++export MAPBOX_TOKEN=`cat /data/mapboxapikey`
++export ZMQ=1
++
+ exec ./launch_chffrplus.sh
